@@ -1,0 +1,1140 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0E5A47">
+<title>Sunu Jàng 2.0</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=Noto+Naskh+Arabic:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --baobab:#0E5A47; --baobab-2:#0A4536; --baobab-soft:#E3F0EA;
+  --mango:#F4A62A; --mango-soft:#FDF0D8;
+  --bissap:#9B1D4A; --bissap-soft:#F7E3EA;
+  --ocean:#2A7DB8; --ocean-soft:#E2EEF7;
+  --ink:#1A1F2B; --ink-2:#4A5262; --ink-3:#7A8292;
+  --paper:#F6F7F4; --card:#FFFFFF; --line:#E3E6E0;
+  --ok:#1E8A4C; --warn:#C26A00; --bad:#C0392B;
+  --r-lg:22px; --r-md:14px; --r-sm:10px;
+  --fs:1;
+  --display:'Bricolage Grotesque', system-ui, sans-serif;
+  --body:'Atkinson Hyperlegible', system-ui, sans-serif;
+}
+html.contrast{
+  --paper:#FFFFFF; --card:#FFFFFF; --line:#1A1F2B; --ink-2:#1A1F2B; --ink-3:#2E3442;
+  --baobab:#00402F; --baobab-soft:#D6EBE1; --bissap:#7A0F35; --ocean:#0B4F80;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{font-size:calc(16px * var(--fs));-webkit-text-size-adjust:100%}
+body{font-family:var(--body);color:var(--ink);background:#DCE3DE;line-height:1.45;min-height:100vh}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer;border:0;background:none}
+:focus-visible{outline:3px solid var(--mango);outline-offset:2px;border-radius:6px}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+
+/* phone frame on desktop, full screen on mobile */
+.app{max-width:480px;margin:0 auto;min-height:100vh;background:var(--paper);position:relative;display:flex;flex-direction:column;
+  padding-top:env(safe-area-inset-top)}
+@media (min-width:600px){body{padding:24px 0}.app{min-height:calc(100vh - 48px);border-radius:28px;overflow:hidden;box-shadow:0 30px 60px -20px rgba(14,90,71,.35)}}
+
+/* top bar */
+.top{display:flex;align-items:center;gap:10px;padding:14px 18px 8px}
+.top .who{flex:1;min-width:0}
+.top .hello{font-family:var(--display);font-weight:700;font-size:1.2rem;line-height:1.15;letter-spacing:-.01em}
+.top .sub{color:var(--ink-3);font-size:.85rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.iconbtn{width:44px;height:44px;border-radius:50%;display:grid;place-items:center;background:var(--card);border:1px solid var(--line);flex:none;position:relative}
+.iconbtn .dot{position:absolute;top:9px;right:10px;width:9px;height:9px;border-radius:50%;background:var(--bissap);border:2px solid var(--card)}
+.net{font-size:.75rem;padding:4px 9px;border-radius:99px;background:var(--baobab-soft);color:var(--baobab);font-weight:700;display:flex;gap:5px;align-items:center}
+.net.off{background:var(--mango-soft);color:var(--warn)}
+.net i{width:7px;height:7px;border-radius:50%;background:currentColor}
+
+main{flex:1;padding:6px 18px 110px;overflow-x:hidden}
+.sec-title{font-family:var(--display);font-weight:700;font-size:1.1rem;margin:22px 0 10px;display:flex;align-items:baseline;justify-content:space-between;gap:8px}
+.sec-title small{font-family:var(--body);font-weight:400;font-size:.85rem;color:var(--ink-3)}
+.link{color:var(--baobab);font-weight:700;font-size:.9rem;padding:6px 0}
+
+/* bottom nav */
+.nav{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:480px;background:rgba(255,255,255,.96);backdrop-filter:blur(10px);
+  border-top:1px solid var(--line);display:flex;padding:6px 6px calc(8px + env(safe-area-inset-bottom));z-index:20}
+@media (min-width:600px){.nav{bottom:24px;border-radius:0 0 28px 28px}}
+.nav button{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;padding:6px 2px;font-size:.72rem;color:var(--ink-3);border-radius:14px;min-height:54px}
+.nav button svg{width:24px;height:24px}
+.nav button.on{color:var(--baobab);font-weight:700}
+.nav button.on .pill{background:var(--baobab-soft)}
+.nav .pill{padding:3px 16px;border-radius:99px;display:grid;place-items:center;transition:background .2s}
+
+/* cards & lists */
+.card{background:var(--card);border-radius:var(--r-lg);padding:16px;border:1px solid var(--line)}
+.stack>*+*{margin-top:10px}
+.row{display:flex;align-items:center;gap:12px}
+.grow{flex:1;min-width:0}
+.muted{color:var(--ink-3);font-size:.88rem}
+.list{background:var(--card);border-radius:var(--r-lg);border:1px solid var(--line);overflow:hidden}
+.item{display:flex;align-items:center;gap:12px;padding:13px 14px;width:100%;text-align:left;min-height:60px}
+.item+.item{border-top:1px solid var(--line)}
+.item .t{font-weight:700}
+.item .chev{color:var(--ink-3);width:18px;height:18px;flex:none}
+.mono{width:44px;height:44px;border-radius:13px;display:grid;place-items:center;font-family:var(--display);font-weight:800;color:#fff;flex:none;font-size:1rem}
+.badge{font-size:.75rem;font-weight:700;padding:3px 9px;border-radius:99px;background:var(--paper);color:var(--ink-2);white-space:nowrap}
+.badge.ok{background:#DDF2E5;color:var(--ok)}.badge.bad{background:#F8E0DD;color:var(--bad)}.badge.warn{background:var(--mango-soft);color:var(--warn)}.badge.lock{background:var(--bissap-soft);color:var(--bissap)}
+
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:50px;padding:0 20px;border-radius:99px;font-weight:700;background:var(--baobab);color:#fff;font-size:1rem}
+.btn:active{transform:scale(.98)}
+.btn.block{width:100%}
+.btn.ghost{background:var(--card);color:var(--baobab);border:1.5px solid var(--baobab)}
+.btn.mango{background:var(--mango);color:var(--ink)}
+.btn.small{min-height:40px;padding:0 14px;font-size:.9rem}
+.btn.danger{background:var(--card);color:var(--bad);border:1.5px solid #E7B9B3}
+.btn svg{width:20px;height:20px}
+.btns{display:flex;gap:10px;flex-wrap:wrap}
+
+.chips{display:flex;gap:8px;overflow-x:auto;padding-bottom:4px;scrollbar-width:none;margin:0 -18px;padding-left:18px;padding-right:18px}
+.chips::-webkit-scrollbar{display:none}
+.chip{flex:none;padding:9px 15px;border-radius:99px;background:var(--card);border:1px solid var(--line);font-weight:700;font-size:.9rem;min-height:42px}
+.chip.on{background:var(--ink);color:#fff;border-color:var(--ink)}
+
+/* signature: the wax hero */
+.hero{border-radius:26px;background:var(--baobab);color:#fff;padding:20px;position:relative;overflow:hidden}
+.hero .wax{position:absolute;inset:0;opacity:.4;pointer-events:none}
+.hero>*:not(.wax){position:relative}
+.hero h2{font-family:var(--display);font-weight:800;font-size:1.7rem;line-height:1.05;letter-spacing:-.02em;max-width:15ch}
+.hero p{opacity:.9;margin-top:6px;max-width:30ch}
+.hero .btn{background:var(--mango);color:var(--ink);margin-top:16px}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:16px}
+.stat{background:rgba(255,255,255,.12);border-radius:16px;padding:10px 12px}
+.stat b{font-family:var(--display);font-size:1.45rem;display:block;line-height:1.1}
+.stat span{font-size:.75rem;opacity:.85}
+
+.kpis{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.kpi{background:var(--card);border:1px solid var(--line);border-radius:20px;padding:14px}
+.kpi b{font-family:var(--display);font-size:1.8rem;line-height:1;display:block;margin-top:6px}
+.kpi span{font-size:.82rem;color:var(--ink-3)}
+.bar{height:8px;border-radius:99px;background:var(--paper);overflow:hidden;margin-top:8px}
+.bar i{display:block;height:100%;background:var(--baobab);border-radius:99px}
+
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.tile{background:var(--card);border:1px solid var(--line);border-radius:20px;padding:14px;text-align:left;display:flex;flex-direction:column;gap:10px;min-height:118px}
+.tile .t{font-weight:700;line-height:1.2}
+
+/* forms */
+label.f{display:block;font-weight:700;font-size:.9rem;margin:14px 0 6px}
+.input{width:100%;min-height:52px;border-radius:var(--r-md);border:1.5px solid var(--line);background:var(--card);padding:0 14px;font-size:1rem}
+textarea.input{padding:12px 14px;min-height:96px;resize:vertical}
+.input:focus{border-color:var(--baobab);outline:none}
+.seg{display:flex;background:var(--card);border:1px solid var(--line);border-radius:99px;padding:4px;gap:4px}
+.seg button{flex:1;min-height:40px;border-radius:99px;font-weight:700;font-size:.9rem;color:var(--ink-2)}
+.seg button.on{background:var(--baobab);color:#fff}
+
+/* sheet */
+.scrim{position:fixed;inset:0;background:rgba(15,25,20,.45);z-index:40;display:flex;align-items:flex-end;justify-content:center;animation:fade .2s}
+.sheet{background:var(--paper);width:100%;max-width:480px;max-height:92vh;overflow:auto;border-radius:26px 26px 0 0;padding:10px 18px calc(24px + env(safe-area-inset-bottom));animation:up .25s ease-out}
+.sheet .grab{width:44px;height:5px;border-radius:9px;background:var(--line);margin:4px auto 10px}
+.sheet h3{font-family:var(--display);font-size:1.4rem;line-height:1.15;margin-bottom:4px}
+@keyframes up{from{transform:translateY(40px);opacity:.4}}
+@keyframes fade{from{opacity:0}}
+
+.toast{position:fixed;left:50%;bottom:96px;transform:translateX(-50%);width:max-content;background:var(--ink);color:#fff;padding:12px 18px;border-radius:14px;font-weight:700;z-index:60;max-width:90%;animation:up .2s;display:flex;gap:8px;align-items:center}
+
+/* lesson */
+.lesson h4{font-family:var(--display);font-size:1.15rem;margin:18px 0 6px}
+.lesson p,.lesson li{margin-top:6px}
+.lesson ul,.lesson ol{padding-left:22px}
+.lesson .box{background:var(--mango-soft);border-radius:var(--r-md);padding:12px 14px;margin-top:12px}
+.lesson .ex{background:var(--ocean-soft);border-radius:var(--r-md);padding:12px 14px;margin-top:12px}
+.speak{display:inline-flex;align-items:center;gap:6px;background:var(--baobab-soft);color:var(--baobab);font-weight:700;padding:8px 14px;border-radius:99px;font-size:.9rem;min-height:40px}
+.speak svg{width:18px;height:18px}
+
+/* quiz */
+.qhead{display:flex;align-items:center;gap:12px;margin-bottom:16px}
+.qprog{flex:1;height:10px;background:var(--line);border-radius:99px;overflow:hidden}
+.qprog i{display:block;height:100%;background:var(--mango);transition:width .3s}
+.q{font-family:var(--display);font-size:1.45rem;font-weight:700;line-height:1.2;margin:8px 0 18px}
+.opt{display:flex;align-items:center;gap:12px;width:100%;text-align:left;background:var(--card);border:2px solid var(--line);border-radius:18px;padding:14px;min-height:62px;font-size:1.05rem;margin-bottom:10px}
+.opt .k{width:34px;height:34px;border-radius:10px;background:var(--paper);display:grid;place-items:center;font-weight:700;flex:none}
+.opt.good{border-color:var(--ok);background:#E9F6EE}.opt.good .k{background:var(--ok);color:#fff}
+.opt.wrong{border-color:var(--bad);background:#FBECEA}.opt.wrong .k{background:var(--bad);color:#fff}
+.explain{border-radius:16px;padding:14px;margin-top:4px}
+.explain.good{background:#E9F6EE}.explain.wrong{background:#FBECEA}
+.score{font-family:var(--display);font-size:4.5rem;font-weight:800;line-height:1;color:var(--baobab)}
+
+/* roll call */
+.roll{display:flex;align-items:center;gap:12px;padding:10px 14px;min-height:64px}
+.roll+.roll{border-top:1px solid var(--line)}
+.av{width:42px;height:42px;border-radius:50%;display:grid;place-items:center;font-weight:700;background:var(--baobab-soft);color:var(--baobab);flex:none;font-size:.95rem}
+.tri{display:flex;gap:6px}
+.tri button{width:44px;height:44px;border-radius:12px;border:1.5px solid var(--line);font-weight:800;font-size:.95rem;background:var(--card)}
+.tri button.p.on{background:var(--ok);border-color:var(--ok);color:#fff}
+.tri button.a.on{background:var(--bad);border-color:var(--bad);color:#fff}
+.tri button.r.on{background:var(--mango);border-color:var(--mango);color:var(--ink)}
+.noteIn{width:76px;min-height:46px;text-align:center;border-radius:12px;border:1.5px solid var(--line);font-size:1.1rem;font-weight:700;background:var(--card)}
+.noteIn:focus{border-color:var(--baobab);outline:none}
+
+/* welcome */
+.welcome{background:var(--baobab);color:#fff;min-height:100vh;display:flex;flex-direction:column;position:relative;overflow:hidden}
+.welcome .wax{position:absolute;inset:0;opacity:.55}
+.welcome .inner{position:relative;padding:28px 22px 30px;display:flex;flex-direction:column;flex:1}
+.brand{display:flex;align-items:center;gap:10px;font-family:var(--display);font-weight:800;font-size:1.2rem}
+.brand .logo{width:42px;height:42px;border-radius:13px;background:var(--mango);display:grid;place-items:center;color:var(--baobab)}
+.welcome h1{font-family:var(--display);font-weight:800;font-size:3.1rem;line-height:.95;letter-spacing:-.03em;margin-top:auto;padding-top:40px}
+.welcome .lead{font-size:1.1rem;opacity:.92;margin-top:12px;max-width:28ch}
+.roles{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:26px}
+.role{background:#fff;color:var(--ink);border-radius:22px;padding:16px;text-align:left;min-height:128px;display:flex;flex-direction:column;justify-content:space-between}
+.role svg{width:30px;height:30px;color:var(--baobab)}
+.role b{font-family:var(--display);font-size:1.15rem;display:block}
+.role span{font-size:.82rem;color:var(--ink-3)}
+.langs{display:flex;gap:6px;margin-top:18px}
+.langs button{padding:8px 14px;border-radius:99px;border:1.5px solid rgba(255,255,255,.5);color:#fff;font-weight:700;font-size:.9rem}
+.langs button.on{background:#fff;color:var(--baobab);border-color:#fff}
+
+.levels{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.levels button{min-height:52px;border-radius:14px;background:var(--card);border:1.5px solid var(--line);font-weight:700}
+.levels button.on{background:var(--baobab);color:#fff;border-color:var(--baobab)}
+.cycle{font-size:.85rem;color:var(--ink-3);margin:12px 0 6px;font-weight:700}
+
+.bubble{max-width:82%;padding:10px 14px;border-radius:18px;margin-top:8px}
+.bubble.me{background:var(--baobab);color:#fff;margin-left:auto;border-bottom-right-radius:6px}
+.bubble.them{background:var(--card);border:1px solid var(--line);border-bottom-left-radius:6px}
+.bubble small{display:block;opacity:.7;font-size:.72rem;margin-top:3px}
+
+.table{width:100%;border-collapse:collapse;font-size:.92rem}
+.table th{text-align:left;font-size:.78rem;color:var(--ink-3);font-weight:700;padding:8px 6px;border-bottom:1px solid var(--line)}
+.table td{padding:10px 6px;border-bottom:1px solid var(--line)}
+.table td.n{text-align:right;font-weight:700;font-variant-numeric:tabular-nums}
+
+.pay{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.month{border-radius:14px;padding:10px;border:1.5px solid var(--line);background:var(--card);text-align:left;min-height:62px}
+.month b{display:block;font-size:.9rem}
+.month.paid{background:#E9F6EE;border-color:#BFE3CC}
+.month.due{border-color:var(--mango);background:var(--mango-soft)}
+
+.ring{--p:60;width:64px;height:64px;border-radius:50%;background:conic-gradient(var(--mango) calc(var(--p)*1%), rgba(255,255,255,.18) 0);display:grid;place-items:center;flex:none}
+.ring span{width:50px;height:50px;border-radius:50%;background:var(--baobab);display:grid;place-items:center;font-weight:800;font-size:.9rem}
+.empty{text-align:center;padding:28px 16px;color:var(--ink-3)}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+.locked{position:relative}
+.spacer{height:14px}
+.pill-row{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+/* arabe */
+.ar,[lang=ar]{font-family:'Noto Naskh Arabic','Amiri',serif;direction:rtl;unicode-bidi:isolate}
+.lesson .ar{display:block;text-align:right;font-size:1.4em;line-height:2;margin-top:8px}
+.lesson .tr{display:block;color:var(--ink-2);font-size:.95em;margin-top:2px}
+.lesson .verse{background:var(--baobab-soft);border-radius:var(--r-md);padding:14px 16px;margin-top:12px;text-align:center}
+.lesson .verse .ar{text-align:center;font-size:1.6em}
+.lesson table{width:100%;border-collapse:collapse;margin-top:10px}
+.lesson td{padding:8px 6px;border-bottom:1px solid var(--line)}
+.lesson td.ar{font-size:1.3em;text-align:right;display:table-cell}
+.mono.arm{font-family:'Noto Naskh Arabic',serif;font-weight:700;font-size:1.25rem;padding-bottom:4px}
+.q .ar,.opt .ar{font-size:1.25em}
+.arsub{font-family:'Noto Naskh Arabic',serif;color:var(--ink-3);font-size:1rem;direction:rtl}
+.track{display:flex;gap:8px;margin-top:4px}
+.track button{flex:1;text-align:left;border:1.5px solid var(--line);border-radius:16px;padding:12px;background:var(--card);min-height:70px}
+.track button.on{border-color:var(--baobab);background:var(--baobab-soft)}
+.track b{display:block}
+.track span{font-size:.82rem;color:var(--ink-3)}
+.tabs2{display:flex;gap:6px;margin:4px 0 14px}
+.tabs2 button{flex:1;min-height:44px;border-radius:12px;font-weight:700;border:1.5px solid var(--line);background:var(--card)}
+.tabs2 button.on{background:var(--ink);color:#fff;border-color:var(--ink)}
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script>
+/* ============================================================
+   Sunu Jàng 2.0 — prototype complet (données de démonstration)
+   Profils : Élève · Parent · Enseignant · École
+   ============================================================ */
+
+// ---------- icônes ----------
+const ICONS={
+ home:'<path d="M3 10.5 12 3l9 7.5V21h-7v-6h-4v6H3z"/>',
+ book:'<path d="M4 4h6a3 3 0 0 1 3 3v13a2 2 0 0 0-2-2H4z"/><path d="M20 4h-6a3 3 0 0 0-3 3v13a2 2 0 0 1 2-2h7z"/>',
+ quiz:'<circle cx="12" cy="12" r="9"/><path d="M9.5 9a2.5 2.5 0 1 1 3.5 2.3c-.6.3-1 .9-1 1.6V14"/><circle cx="12" cy="17.3" r=".7" fill="currentColor"/>',
+ award:'<circle cx="12" cy="9" r="6"/><path d="M8.5 14 7 22l5-3 5 3-1.5-8"/>',
+ user:'<circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/>',
+ bell:'<path d="M6 16V11a6 6 0 0 1 12 0v5l2 2H4z"/><path d="M10 21h4"/>',
+ chart:'<path d="M4 20V11M10 20V5M16 20v-8M21 20H3"/>',
+ cal:'<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/>',
+ wallet:'<rect x="3" y="6" width="18" height="14" rx="2"/><path d="M3 10h18M16 15h2"/>',
+ msg:'<path d="M4 5h16v11H9l-5 4z"/>',
+ check:'<path d="m5 12 5 5 9-10"/>',
+ x:'<path d="M6 6l12 12M18 6 6 18"/>',
+ gear:'<circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9 7 7M17 17l2.1 2.1M4.9 19.1 7 17M17 7l2.1-2.1"/>',
+ volume:'<path d="M4 9h4l5-4v14l-5-4H4z"/><path d="M17 8.5a5 5 0 0 1 0 7M19.5 6a8.5 8.5 0 0 1 0 12"/>',
+ lock:'<rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/>',
+ plus:'<path d="M12 5v14M5 12h14"/>',
+ users:'<circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0"/><path d="M16 4.5a3.5 3.5 0 0 1 0 7M18 14a6 6 0 0 1 3.5 6"/>',
+ school:'<path d="M12 3 2 8l10 5 10-5z"/><path d="M6 10v5c0 2 3 4 6 4s6-2 6-4v-5"/>',
+ clip:'<rect x="5" y="4" width="14" height="17" rx="2"/><path d="M9 4V3h6v1M9 10h6M9 14h6M9 18h3"/>',
+ back:'<path d="M15 5l-7 7 7 7"/>',
+ chev:'<path d="m9 5 7 7-7 7"/>',
+ flame:'<path d="M12 22c4 0 7-3 7-7 0-4-3-6-4-10-2 2-3 4-3 6-1-1-2-2-2-4-2 2-5 5-5 8 0 4 3 7 7 7z"/>',
+ star:'<path d="m12 3 2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1L3.2 9.5l6.1-.9z"/>',
+ grid:'<rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/>',
+ send:'<path d="M4 12 20 4l-6 16-3-7z"/>',
+ copy:'<rect x="8" y="8" width="12" height="12" rx="2"/><path d="M16 8V5a1 1 0 0 0-1-1H5a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h3"/>',
+ phone:'<rect x="6" y="2" width="12" height="20" rx="2.5"/><path d="M11 18h2"/>',
+ megaphone:'<path d="M3 10v4h3l7 5V5L6 10z"/><path d="M17 9a4 4 0 0 1 0 6"/>',
+ vote:'<rect x="4" y="11" width="16" height="10" rx="2"/><path d="m8 7 3 3 5-6"/>',
+ key:'<circle cx="8" cy="15" r="4"/><path d="m11 12 9-9M16 7l3 3"/>',
+ trend:'<path d="m3 17 6-6 4 4 8-8"/><path d="M15 7h6v6"/>',
+ logout:'<path d="M15 4h4v16h-4M10 8l-4 4 4 4M6 12h10"/>',
+};
+const I=(n,s=22)=>`<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICONS[n]||''}</svg>`;
+
+// motif inspiré des tissus wax : cercles concentriques et losanges
+const WAX=(c1='#F4A62A',c2='#13715A')=>`<svg class="wax" viewBox="0 0 400 300" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+<defs><pattern id="wx" width="80" height="80" patternUnits="userSpaceOnUse">
+<circle cx="80" cy="0" r="34" fill="none" stroke="${c2}" stroke-width="10"/><circle cx="80" cy="0" r="16" fill="${c2}"/>
+<circle cx="0" cy="80" r="34" fill="none" stroke="${c2}" stroke-width="10"/><circle cx="0" cy="80" r="16" fill="${c2}"/>
+<path d="M40 22 58 40 40 58 22 40z" fill="none" stroke="${c1}" stroke-width="3"/><circle cx="40" cy="40" r="4" fill="${c1}"/>
+</pattern><linearGradient id="fadewx" x1="0" x2="1"><stop offset=".5" stop-color="#fff" stop-opacity="0"/><stop offset="1" stop-color="#fff" stop-opacity="1"/></linearGradient>
+<mask id="mwx"><rect width="400" height="300" fill="url(#fadewx)"/></mask></defs>
+<rect width="400" height="300" fill="url(#wx)" mask="url(#mwx)"/></svg>`;
+
+// ---------- utilitaires ----------
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const $=s=>document.querySelector(s);
+const initials=n=>n.split(' ').map(w=>w[0]).slice(0,2).join('').toUpperCase();
+const fmt=(n,d=2)=>n==null||isNaN(n)?'—':Number(n).toFixed(d).replace('.',',');
+const fcfa=n=>Number(n).toLocaleString('fr-FR').replace(/ | /g,' ')+' F CFA';
+const uid=()=>Math.random().toString(36).slice(2,9);
+function seeded(seed){let h=2166136261;for(const c of seed)h=Math.imul(h^c.charCodeAt(0),16777619);return()=>{h=Math.imul(h^(h>>>15),2246822507);h=Math.imul(h^(h>>>13),3266489909);h^=h>>>16;return (h>>>0)/4294967296}}
+const todayISO=()=>new Date().toISOString().slice(0,10);
+const dLabel=iso=>new Date(iso+'T12:00:00').toLocaleDateString('fr-FR',{weekday:'short',day:'numeric',month:'short'});
+const code=(p)=>p+'-'+Math.floor(1000+Math.random()*9000);
+
+// ---------- textes FR / Wolof ----------
+const T={
+ fr:{home:'Accueil',courses:'Cours',quiz:'Quiz',exams:'Examens',me:'Moi',notes:'Notes',school:'École',pay:'Paiements',msgs:'Messages',call:'Appel',bulletins:'Bulletins',more:'Plus',dash:'Tableau',inscr:'Inscriptions',classes:'Classes',
+     hello:'Bonjour',listen:'Écouter',start:'Commencer',welcome:'L\'école dans ta poche.',lead:'Cours, quiz, notes, bulletins et paiements — pour les élèves, les parents, les enseignants et les écoles du Sénégal.',
+     student:'Élève',parent:'Parent',teacher:'Enseignant',director:'École',
+     studentS:'Réviser et s\'entraîner',parentS:'Suivre son enfant',teacherS:'Gérer ses classes',directorS:'Piloter l\'établissement'},
+ wo:{home:'Kër',courses:'Jàng',quiz:'Laaj',exams:'Eksaame',me:'Man',notes:'Not yi',school:'Lekkool',pay:'Fey',msgs:'Bataaxal',call:'Woote',bulletins:'Bulletin',more:'Yeneen',dash:'Tablo',inscr:'Bindu',classes:'Kalaas',
+     hello:'Salaam aleekum',listen:'Déglu',start:'Tàmbali',welcome:'Lekkool bi ci sa poos.',lead:'Jàng, laaj, not, bulletin ak fey — ngir ndongo yi, waajur yi, jàngalekat yi ak lekkool yi.',
+     student:'Ndongo',parent:'Waajur',teacher:'Jàngalekat',director:'Lekkool',
+     studentS:'Jàng ak tàggatu',parentS:'Topp sa doom',teacherS:'Saytu say kalaas',directorS:'Jiite lekkool bi'}
+};
+const t=k=>(T[S.lang]&&T[S.lang][k])||T.fr[k]||k;
+
+// ---------- programme scolaire sénégalais ----------
+const LEVELS=[
+ {id:'CI',cycle:'elem'},{id:'CP',cycle:'elem'},{id:'CE1',cycle:'elem'},{id:'CE2',cycle:'elem'},{id:'CM1',cycle:'elem'},{id:'CM2',cycle:'elem',exam:'CFEE'},
+ {id:'6e',cycle:'moyen'},{id:'5e',cycle:'moyen'},{id:'4e',cycle:'moyen'},{id:'3e',cycle:'moyen',exam:'BFEM'},
+ {id:'2nde',cycle:'lycee'},{id:'1ère',cycle:'lycee'},{id:'Tle',cycle:'lycee',exam:'BAC'}];
+const CYCLE_NAME={elem:'Élémentaire',moyen:'Moyen',lycee:'Secondaire'};
+const levelOf=id=>LEVELS.find(l=>l.id===id)||LEVELS[9];
+const SUBJ={
+ 'Français':['Fr','#2A7DB8'],'Mathématiques':['Ma','#0E5A47'],'Sciences (IST)':['Sc','#3E8E41'],'Histoire':['Hi','#B4652A'],'Géographie':['Gé','#8A6D1F'],'Éducation civique':['Ec','#5B6B2F'],'Arabe':['Ar','#7A3E6B'],
+ 'SVT':['SV','#3E8E41'],'Sciences physiques':['PC','#6B4FA0'],'Histoire-Géo':['HG','#B4652A'],'Anglais':['An','#9B1D4A'],'Philosophie':['Ph','#34495E'],'Informatique':['In','#1F7A8C']};
+const SUBJECTS={
+ elem:['Français','Mathématiques','Sciences (IST)','Histoire','Géographie','Éducation civique','Arabe'],
+ moyen:['Français','Mathématiques','SVT','Sciences physiques','Histoire-Géo','Anglais','Éducation civique','Informatique'],
+ lycee:['Français','Mathématiques','SVT','Sciences physiques','Histoire-Géo','Anglais','Philosophie','Informatique']};
+const mono=(s,size=44)=>{if(typeof AR_SUBJ!=='undefined'&&AR_SUBJ[s]){const a=AR_SUBJ[s];return `<div class="mono arm" lang="ar" style="background:${a[3]};width:${size}px;height:${size}px">${a[2]}</div>`}const m=SUBJ[s]||[s.slice(0,2),'#4A5262'];return `<div class="mono" style="background:${m[1]};width:${size}px;height:${size}px">${m[0]}</div>`};
+
+const CHAPTERS={
+ 'elem|Français':['La phrase et la ponctuation','Le nom et le déterminant','Le présent de l\'indicatif','Le passé composé','Accord sujet-verbe','Lire et comprendre un texte'],
+ 'elem|Mathématiques':['Les fractions','Les nombres décimaux','Les quatre opérations','Périmètre et aire','Les mesures de longueur','Résoudre un problème'],
+ 'elem|Sciences (IST)':['Les états de l\'eau','La respiration','La nutrition des plantes','Le paludisme : se protéger','L\'électricité à la maison'],
+ 'elem|Histoire':['Les grands empires (Ghana, Mali, Songhaï)','Les royaumes du Sénégal','Les résistants à la colonisation','L\'indépendance du Sénégal'],
+ 'elem|Géographie':['Le Sénégal : régions et capitales','Les fleuves du Sénégal','Le climat et les saisons','Les activités économiques'],
+ 'elem|Éducation civique':['Les symboles de la République','Les droits de l\'enfant','La propreté et l\'hygiène','Le code de la route'],
+ 'elem|Arabe':['L\'alphabet','Les voyelles courtes','Lire des mots simples'],
+ 'moyen|Français':['Le discours rapporté','Les figures de style','Le texte argumentatif','Le résumé de texte','La dissertation : méthode'],
+ 'moyen|Mathématiques':['Théorème de Thalès','Théorème de Pythagore','Équations du 1er degré','Calcul littéral et identités','Statistiques','Fonctions affines'],
+ 'moyen|SVT':['La digestion','La circulation sanguine','La reproduction humaine','La cellule','L\'environnement et l\'écologie'],
+ 'moyen|Sciences physiques':['Le circuit électrique','Masse et volume','Les mélanges et corps purs','Le mouvement et la vitesse'],
+ 'moyen|Histoire-Géo':['La traite atlantique','La colonisation de l\'Afrique','La Seconde Guerre mondiale','La décolonisation','La population du Sénégal'],
+ 'moyen|Anglais':['Simple present','Simple past','Present perfect','Describing people','Writing a letter'],
+ 'moyen|Éducation civique':['La Constitution','Les institutions du Sénégal','La citoyenneté'],
+ 'moyen|Informatique':['L\'ordinateur et ses composants','Le traitement de texte','Internet en sécurité'],
+ 'lycee|Français':['Le commentaire composé','La dissertation littéraire','La littérature africaine','Le roman et la poésie'],
+ 'lycee|Mathématiques':['Les suites numériques','Limites et continuité','Dérivation','Fonction logarithme','Fonction exponentielle','Probabilités'],
+ 'lycee|SVT':['Le système nerveux','L\'immunologie','La génétique','La reproduction'],
+ 'lycee|Sciences physiques':['Cinématique','Les lois de Newton','Chimie organique','Électromagnétisme'],
+ 'lycee|Histoire-Géo':['La guerre froide','La décolonisation en Afrique','La mondialisation','L\'Union africaine'],
+ 'lycee|Anglais':['Essay writing','Reading comprehension','Reported speech'],
+ 'lycee|Philosophie':['Qu\'est-ce que la philosophie ?','La conscience','Le travail','La liberté','L\'État'],
+ 'lycee|Informatique':['Algorithmique','Les tableurs','Les bases de données'],
+};
+
+const LESSONS={
+'elem|Mathématiques|0':{dur:8,html:`<p>Une <b>fraction</b> représente une partie d'un tout partagé en parts égales.</p>
+<div class="ex"><b>Exemple :</b> Awa coupe un pain de mil en 4 parts égales. Elle en mange 3. Elle a mangé <b>3/4</b> du pain.</div>
+<h4>Les mots à retenir</h4><ul><li>Le nombre du haut est le <b>numérateur</b> : les parts prises.</li><li>Le nombre du bas est le <b>dénominateur</b> : le nombre total de parts.</li></ul>
+<h4>Calculer une fraction d'un nombre</h4><p>Pour trouver 3/4 de 20 : on divise par le dénominateur, puis on multiplie par le numérateur.</p>
+<div class="box">20 ÷ 4 = 5, puis 5 × 3 = <b>15</b>. Donc 3/4 de 20 = 15.</div>
+<h4>À toi</h4><p>Un commerçant a 30 mangues. Il vend 2/3 de ses mangues. Combien en a-t-il vendu ? <i>(Réponse : 30 ÷ 3 × 2 = 20 mangues)</i></p>`},
+'elem|Histoire|2':{dur:7,html:`<p>À la fin du XIXe siècle, plusieurs hommes et femmes se sont opposés à la conquête coloniale française.</p>
+<h4>Lat Dior Ngoné Latyr Diop</h4><p>Damel (roi) du Cayor, il refuse la construction du chemin de fer Dakar–Saint-Louis. Il meurt au combat à <b>Dékheulé en 1886</b>.</p>
+<h4>Aline Sitoé Diatta</h4><p>Héroïne de Casamance, elle appelle la population à refuser les réquisitions de riz pendant la Seconde Guerre mondiale. Arrêtée et déportée, elle meurt à Tombouctou en 1944.</p>
+<h4>Autres figures</h4><ul><li><b>El Hadji Omar Tall</b> : chef religieux et militaire.</li><li><b>Alboury Ndiaye</b> : dernier Bourba du Djolof.</li></ul>
+<div class="box">Retiens : ces résistants sont aujourd'hui des symboles de courage et de dignité pour tout le Sénégal.</div>`},
+'moyen|Mathématiques|0':{dur:10,html:`<p>Le <b>théorème de Thalès</b> permet de calculer des longueurs quand deux droites parallèles coupent deux droites sécantes.</p>
+<h4>Énoncé</h4><div class="box">Si les points A, M, B et A, N, C sont alignés dans le même ordre et si (MN) // (BC), alors : <b>AM/AB = AN/AC = MN/BC</b></div>
+<h4>Exemple</h4><div class="ex">AM = 3 cm, AB = 6 cm, BC = 8 cm et (MN) // (BC).<br>AM/AB = MN/BC donc 3/6 = MN/8, soit MN = 8 × 3 ÷ 6 = <b>4 cm</b>.</div>
+<h4>Méthode en 3 étapes</h4><ol><li>Vérifier l'alignement et le parallélisme.</li><li>Écrire l'égalité des trois rapports.</li><li>Faire un produit en croix.</li></ol>
+<p>Ce chapitre tombe très souvent au <b>BFEM</b>.</p>`},
+'moyen|SVT|0':{dur:8,html:`<p>La <b>digestion</b> transforme les aliments en nutriments que le sang peut transporter.</p>
+<h4>Le trajet des aliments</h4><ol><li><b>Bouche</b> : mastication et salive (début de la digestion de l'amidon).</li><li><b>Œsophage</b> puis <b>estomac</b> : brassage et suc gastrique.</li><li><b>Intestin grêle</b> : fin de la digestion et <b>absorption</b> des nutriments.</li><li><b>Gros intestin</b> : absorption de l'eau, formation des selles.</li></ol>
+<div class="box">Les enzymes sont des substances qui découpent les grosses molécules en petites molécules.</div>`},
+'moyen|Français|0':{dur:6,html:`<p>Pour rapporter les paroles de quelqu'un, on utilise le discours direct ou le discours indirect.</p>
+<h4>Discours direct</h4><div class="ex">Le maître dit : « Je corrigerai vos copies demain. »</div>
+<h4>Discours indirect</h4><div class="ex">Le maître dit <b>qu'il corrigera</b> nos copies le lendemain.</div>
+<h4>Ce qui change</h4><ul><li>Les guillemets disparaissent, on ajoute « que ».</li><li>Les pronoms changent (je → il).</li><li>Les indications de temps changent (demain → le lendemain).</li><li>Si le verbe introducteur est au passé, les temps changent : futur → conditionnel.</li></ul>`},
+'lycee|Philosophie|0':{dur:9,html:`<p>Le mot <b>philosophie</b> vient du grec <i>philein</i> (aimer) et <i>sophia</i> (sagesse) : l'amour de la sagesse.</p>
+<h4>Une attitude</h4><p>Philosopher, c'est s'étonner, douter et chercher à comprendre par la raison plutôt que d'accepter les opinions toutes faites.</p>
+<div class="box">Socrate : « Tout ce que je sais, c'est que je ne sais rien. »</div>
+<h4>Philosophie en Afrique</h4><p>Des penseurs comme <b>Cheikh Anta Diop</b>, <b>Souleymane Bachir Diagne</b> ou <b>Paulin Hountondji</b> ont nourri le débat sur la place de la pensée africaine.</p>
+<h4>Pour la dissertation</h4><ul><li>Définir les termes du sujet.</li><li>Dégager le problème.</li><li>Construire un plan qui avance.</li></ul>`},
+'lycee|Mathématiques|0':{dur:10,html:`<p>Une <b>suite numérique</b> est une liste de nombres u₀, u₁, u₂… indexée par les entiers naturels.</p>
+<h4>Suite arithmétique</h4><div class="box">u<sub>n+1</sub> = u<sub>n</sub> + r &nbsp;→&nbsp; u<sub>n</sub> = u₀ + n·r</div>
+<h4>Suite géométrique</h4><div class="box">u<sub>n+1</sub> = q·u<sub>n</sub> &nbsp;→&nbsp; u<sub>n</sub> = u₀·qⁿ</div>
+<div class="ex"><b>Exemple :</b> un élève épargne 500 F la 1re semaine puis 200 F de plus chaque semaine. u₀ = 500, r = 200, donc u₁₀ = 500 + 10 × 200 = <b>2 500 F</b>.</div>`},
+};
+
+// banque de questions (Q: question, C: choix, A: index bonne réponse, E: explication)
+const BANK={
+'elem|Mathématiques':[
+ ['Combien font 3/4 de 20 ?',['12','15','16','5'],1,'20 ÷ 4 = 5, puis 5 × 3 = 15.'],
+ ['7 × 8 = ?',['54','56','64','48'],1,'7 × 8 = 56.'],
+ ['Un rectangle mesure 6 m sur 4 m. Quelle est son aire ?',['20 m²','24 m²','10 m²','24 m'],1,'Aire = longueur × largeur = 6 × 4 = 24 m².'],
+ ['Fatou achète 3 cahiers à 250 F. Combien paie-t-elle ?',['500 F','650 F','750 F','1 000 F'],2,'3 × 250 = 750 F.'],
+ ['1 km = … m',['10','100','1 000','10 000'],2,'Le kilomètre vaut 1 000 mètres.'],
+ ['Le périmètre d\'un carré de 5 cm de côté est :',['10 cm','20 cm','25 cm','15 cm'],1,'Périmètre = 4 × côté = 20 cm.'],
+ ['0,5 est égal à :',['1/5','1/2','5/100','2/5'],1,'0,5 = 5/10 = 1/2.'],
+ ['2,5 + 1,75 = ?',['3,25','4,25','4,75','3,75'],1,'On aligne les virgules : 2,50 + 1,75 = 4,25.'],
+ ['125 + 378 = ?',['493','503','513','403'],1,'125 + 378 = 503.'],
+ ['1 heure = … minutes',['30','100','60','24'],2,'Une heure compte 60 minutes.']],
+'elem|Français':[
+ ['Le pluriel de « cheval » est :',['chevals','chevaux','chevauxs','chevales'],1,'Les noms en -al font souvent leur pluriel en -aux.'],
+ ['Complète : « Nous … nos devoirs. » (finir, présent)',['finissons','finisons','finirons','finissez'],0,'Verbe du 2e groupe : nous finissons.'],
+ ['Les enfants … à l\'école.',['va','vont','allons','vas'],1,'Sujet pluriel (ils) : ils vont.'],
+ ['Le contraire de « grand » est :',['gros','long','petit','haut'],2,'Antonyme de grand : petit.'],
+ ['Dans « Il court rapidement », « rapidement » est :',['un adjectif','un nom','un adverbe','un verbe'],2,'Les mots en -ment qui modifient un verbe sont souvent des adverbes.'],
+ ['« Fatou a mangé » est au :',['présent','futur','passé composé','imparfait'],2,'Auxiliaire avoir + participe passé = passé composé.'],
+ ['Le féminin de « acteur » est :',['acteuse','actrice','acteure','actrise'],1,'acteur → actrice.']],
+'elem|Sciences (IST)':[
+ ['Le paludisme est transmis par :',['la mouche','le moustique anophèle','l\'eau du robinet','le chat'],1,'La femelle anophèle transmet le parasite. Dormir sous moustiquaire protège.'],
+ ['L\'eau bout à :',['50 °C','100 °C','0 °C','200 °C'],1,'Au niveau de la mer, l\'eau bout à 100 °C.'],
+ ['Quel organe pompe le sang ?',['les poumons','le foie','le cœur','l\'estomac'],2,'Le cœur est un muscle qui fait circuler le sang.'],
+ ['La glace est de l\'eau à l\'état :',['liquide','gazeux','solide','chaud'],2,'La glace est l\'état solide de l\'eau.'],
+ ['Les plantes fabriquent leur nourriture grâce à :',['la lumière du soleil','la nuit','le sable','le vent'],0,'C\'est la photosynthèse.']],
+'elem|Histoire':[
+ ['Lat Dior était le damel du :',['Walo','Cayor','Sine','Fouta'],1,'Lat Dior était damel du Cayor.'],
+ ['La fête de l\'indépendance du Sénégal est le :',['4 avril','20 août','1er mai','25 décembre'],0,'Le Sénégal célèbre son indépendance le 4 avril.'],
+ ['Le premier président du Sénégal est :',['Abdou Diouf','Léopold Sédar Senghor','Abdoulaye Wade','Mamadou Dia'],1,'Léopold Sédar Senghor, de 1960 à 1980.'],
+ ['L\'empire du Mali a été fondé par :',['Soundiata Keïta','Samory Touré','El Hadji Omar','Lat Dior'],0,'Soundiata Keïta, après la bataille de Kirina.'],
+ ['Aline Sitoé Diatta est une héroïne de :',['Casamance','Thiès','Saint-Louis','Kaolack'],0,'Elle a résisté en Casamance pendant la Seconde Guerre mondiale.']],
+'elem|Géographie':[
+ ['La capitale du Sénégal est :',['Thiès','Saint-Louis','Dakar','Touba'],2,'Dakar est la capitale.'],
+ ['Combien de régions compte le Sénégal ?',['10','12','14','16'],2,'Le Sénégal compte 14 régions.'],
+ ['Le plus long fleuve du Sénégal est :',['la Gambie','le Saloum','la Casamance','le fleuve Sénégal'],3,'Le fleuve Sénégal, environ 1 750 km.'],
+ ['L\'île de Gorée se trouve près de :',['Dakar','Ziguinchor','Matam','Tambacounda'],0,'Gorée est au large de Dakar.']],
+'moyen|Mathématiques':[
+ ['Un triangle rectangle a des côtés de l\'angle droit de 3 et 4. L\'hypoténuse mesure :',['5','6','7','12'],0,'3² + 4² = 9 + 16 = 25, et √25 = 5.'],
+ ['Résous 2x + 3 = 11',['x = 3','x = 4','x = 7','x = 5'],1,'2x = 8 donc x = 4.'],
+ ['(a + b)² = ?',['a² + b²','a² + 2ab + b²','2a + 2b','a² − b²'],1,'Identité remarquable.'],
+ ['√49 = ?',['6','7','8','9'],1,'7 × 7 = 49.'],
+ ['20 % de 15 000 F =',['1 500 F','2 000 F','3 000 F','300 F'],2,'15 000 × 20 ÷ 100 = 3 000 F.'],
+ ['Développer 3(x + 2)',['3x + 2','3x + 6','x + 6','3x + 5'],1,'3 × x + 3 × 2 = 3x + 6.'],
+ ['Avec Thalès : AM = 3, AB = 6, BC = 8. MN = ?',['4','5','2','6'],0,'MN = 8 × 3 ÷ 6 = 4.'],
+ ['f(x) = 2x + 1. f(3) = ?',['5','6','7','9'],2,'2 × 3 + 1 = 7.']],
+'moyen|Français':[
+ ['« Ses yeux sont des étoiles » est :',['une comparaison','une métaphore','une hyperbole','une litote'],1,'Pas d\'outil de comparaison : c\'est une métaphore.'],
+ ['« Fort comme un lion » contient :',['une métaphore','une comparaison','une personnification','un oxymore'],1,'Outil « comme » : comparaison.'],
+ ['Qui a écrit « Une si longue lettre » ?',['Aminata Sow Fall','Mariama Bâ','Ken Bugul','Fatou Diome'],1,'Mariama Bâ, 1979.'],
+ ['« L\'Aventure ambiguë » est un roman de :',['Cheikh Hamidou Kane','Ousmane Sembène','Birago Diop','Senghor'],0,'Cheikh Hamidou Kane, 1961.'],
+ ['Il dit : « Je viendrai. » → discours indirect :',['Il dit qu\'il viendra.','Il dit que je viendrai.','Il dit : il viendra.','Il dit qu\'il venait.'],0,'Verbe introducteur au présent : le futur reste au futur, je → il.'],
+ ['Senghor est un poète de la :',['Renaissance','Négritude','Pléiade','Romantisme'],1,'Avec Césaire et Damas, il a fondé la Négritude.']],
+'moyen|SVT':[
+ ['La digestion commence dans :',['l\'estomac','la bouche','l\'intestin','le foie'],1,'Mastication et salive dans la bouche.'],
+ ['Les globules rouges transportent :',['le dioxygène','les anticorps','l\'urine','les nutriments seulement'],0,'Grâce à l\'hémoglobine.'],
+ ['L\'unité de base de tout être vivant est :',['l\'organe','le tissu','la cellule','l\'atome'],2,'Tout être vivant est fait de cellules.'],
+ ['Les reins servent à :',['respirer','filtrer le sang','digérer','penser'],1,'Ils filtrent le sang et produisent l\'urine.'],
+ ['L\'absorption des nutriments se fait surtout dans :',['l\'estomac','l\'intestin grêle','la bouche','le gros intestin'],1,'Grâce aux villosités intestinales.']],
+'moyen|Sciences physiques':[
+ ['L\'unité de l\'intensité électrique est :',['le volt','l\'ampère','le watt','l\'ohm'],1,'Intensité en ampères (A).'],
+ ['La formule de l\'eau est :',['CO₂','H₂O','O₂','NaCl'],1,'Deux atomes d\'hydrogène, un d\'oxygène.'],
+ ['P = ?',['U + I','U × I','U ÷ I','I ÷ U'],1,'Puissance = tension × intensité.'],
+ ['Un car parcourt 120 km en 2 h. Sa vitesse moyenne :',['40 km/h','60 km/h','240 km/h','80 km/h'],1,'v = d ÷ t = 120 ÷ 2 = 60 km/h.']],
+'moyen|Histoire-Géo':[
+ ['La Seconde Guerre mondiale a eu lieu de :',['1914 à 1918','1939 à 1945','1945 à 1960','1929 à 1939'],1,'1939–1945.'],
+ ['Le massacre de Thiaroye (tirailleurs) a eu lieu en :',['1944','1960','1914','1885'],0,'Le 1er décembre 1944.'],
+ ['La conférence de Bandung a eu lieu en :',['1945','1955','1960','1963'],1,'1955, en Indonésie.'],
+ ['L\'île de Gorée est classée au patrimoine mondial de l\'UNESCO depuis :',['1978','1960','2000','1990'],0,'Depuis 1978.']],
+'moyen|Anglais':[
+ ['I … a student.',['is','are','am','be'],2,'I am.'],
+ ['The past of « go » is :',['goed','went','gone','going'],1,'go – went – gone.'],
+ ['The plural of « child » is :',['childs','children','childes','child'],1,'Irregular plural.'],
+ ['She … football every day.',['play','plays','playing','is play'],1,'3rd person singular: -s.']],
+'lycee|Mathématiques':[
+ ['La dérivée de x² est :',['x','2x','x²/2','2'],1,'(xⁿ)\' = n·xⁿ⁻¹.'],
+ ['ln(e) = ?',['0','1','e','−1'],1,'ln(e) = 1.'],
+ ['e⁰ = ?',['0','e','1','−1'],2,'Tout nombre non nul à la puissance 0 vaut 1.'],
+ ['La limite de 1/x quand x → +∞ est :',['+∞','1','0','−∞'],2,'1/x devient aussi petit qu\'on veut.'],
+ ['Une primitive de 2x est :',['2','x²','2x²','x'],1,'(x²)\' = 2x.'],
+ ['u₀ = 500, raison 200 (arithmétique). u₁₀ = ?',['2 000','2 500','2 700','700'],1,'u₁₀ = 500 + 10 × 200 = 2 500.']],
+'lycee|Philosophie':[
+ ['« Je pense, donc je suis » est de :',['Socrate','Descartes','Kant','Platon'],1,'René Descartes, Discours de la méthode.'],
+ ['La maïeutique est la méthode de :',['Socrate','Aristote','Nietzsche','Sartre'],0,'L\'art d\'« accoucher » les esprits.'],
+ ['Philosophie signifie :',['amour de la sagesse','science des nombres','étude de Dieu','art de parler'],0,'philein + sophia.'],
+ ['« Nations nègres et culture » est de :',['Senghor','Cheikh Anta Diop','Césaire','Fanon'],1,'Cheikh Anta Diop, 1954.']],
+'gen|Informatique':[
+ ['1 octet = … bits',['4','8','16','1 024'],1,'Un octet contient 8 bits.'],
+ ['Le « cerveau » de l\'ordinateur est :',['la RAM','le processeur (CPU)','le disque dur','l\'écran'],1,'Le processeur exécute les instructions.'],
+ ['La mémoire RAM est :',['permanente','volatile','un périphérique','un logiciel'],1,'Elle s\'efface quand on éteint.'],
+ ['Un bon mot de passe :',['1234','ton prénom','mélange lettres, chiffres et symboles','ta date de naissance'],2,'Long et varié, impossible à deviner.']],
+'gen|Éducation civique':[
+ ['La devise du Sénégal est :',['Liberté, Égalité, Fraternité','Un Peuple, Un But, Une Foi','Unité, Travail, Progrès','Paix et Travail'],1,'Un Peuple – Un But – Une Foi.'],
+ ['L\'emblème au centre du drapeau sénégalais est :',['un lion','une étoile verte','un baobab','un soleil'],1,'Une étoile verte à cinq branches sur la bande jaune.'],
+ ['L\'hymne national du Sénégal s\'appelle :',['Le Lion rouge','Pincez tous vos koras','Afrique mon Afrique','Ndiarel'],1,'« Pincez tous vos koras, frappez les balafons », écrit par Senghor.']],
+};
+function bankFor(cycle,subj){
+ if(AR_SUBJ[subj])return BANK['ar|'+subj]||BANK['ar|Hadith'];
+ const pool=BANK[cycle+'|'+subj]||BANK['gen|'+subj]||
+  (subj==='Histoire-Géo'&&cycle==='lycee'?BANK['moyen|Histoire-Géo']:null)||
+  (subj==='SVT'?BANK['moyen|SVT']:null)||(subj==='Sciences physiques'?BANK['moyen|Sciences physiques']:null)||
+  (subj==='Anglais'?BANK['moyen|Anglais']:null)||(subj==='Français'?BANK[(cycle==='elem'?'elem':'moyen')+'|Français']:null)||
+  (subj==='Arabe'?null:null)||BANK['elem|Géographie'];
+ return pool;
+}
+
+const EXAMS={
+ CFEE:{name:'CFEE',full:'Certificat de fin d\'études élémentaires',subjects:['Français','Mathématiques','Sciences (IST)','Histoire','Géographie']},
+ BFEM:{name:'BFEM',full:'Brevet de fin d\'études moyennes',subjects:['Français','Mathématiques','SVT','Sciences physiques','Histoire-Géo','Anglais']},
+ BAC:{name:'BAC',full:'Baccalauréat (séries L, S, G)',subjects:['Philosophie','Mathématiques','SVT','Sciences physiques','Français','Histoire-Géo','Anglais']}};
+
+// ---------- filière franco-arabe ----------
+// [nom FR, nom arabe, glyphe, couleur]
+const AR_SUBJ={
+ 'Nahw':['Grammaire arabe','النحو','ن','#1F5F8B'],
+ 'Sarf':['Conjugaison et morphologie','الصرف','ص','#2C6E8F'],
+ 'Qirâ’a':['Lecture et dictée','القراءة والإملاء','ق','#3B7A57'],
+ 'Coran & Tajwîd':['Coran et règles de récitation','القرآن والتجويد','قر','#0E5A47'],
+ 'Hadith':['Paroles du Prophète ﷺ','الحديث','ح','#7A4E1D'],
+ 'Qisas al-anbiyâ':['Histoire des prophètes','قصص الأنبياء','أ','#8A3B12'],
+ 'Sîra':['Vie du Prophète ﷺ','السيرة النبوية','س','#6B2D5C'],
+ 'Fiqh':['Pratique religieuse (rite malikite)','الفقه','ف','#4A3F8C'],
+ 'Tawhîd':['Unicité et foi','التوحيد','ت','#2E4A62'],
+ 'Akhlâq':['Bonne conduite','الأخلاق','خ','#5B6B2F']};
+const isAr=s=>!!AR_SUBJ[s];
+const chKey=(cy,s)=>isAr(s)?'ar|'+s:cy+'|'+s;
+function subjectsFor(cy,fil){const base=SUBJECTS[cy];if(fil!=='fa')return base;return [...base.filter(s=>s!=='Arabe'&&s!=='Informatique'),...Object.keys(AR_SUBJ)]}
+const chTitle=c=>c.includes(' · ')?`${esc(c.split(' · ')[1])}<div class="arsub" lang="ar">${esc(c.split(' · ')[0])}</div>`:esc(c);
+const subjLabel=s=>isAr(s)?`${esc(s)} <span class="arsub" lang="ar">${AR_SUBJ[s][1]}</span>`:esc(s);
+Object.assign(CHAPTERS,{
+ 'ar|Nahw':['الكلمة وأقسامها · Le mot et ses catégories','الجملة الاسمية: المبتدأ والخبر · La phrase nominale','الجملة الفعلية: الفعل والفاعل · La phrase verbale','المفعول به · Le complément d\'objet','حروف الجر · Les prépositions','كان وأخواتها · Kâna et ses sœurs','إنّ وأخواتها · Inna et ses sœurs'],
+ 'ar|Sarf':['الفعل الماضي · L\'accompli (passé)','الفعل المضارع · L\'inaccompli (présent)','فعل الأمر · L\'impératif','الميزان الصرفي · Le schème فَعَلَ','المفرد والمثنى والجمع · Singulier, duel, pluriel'],
+ 'ar|Qirâ’a':['الحروف الهجائية · L\'alphabet','الحركات · Les voyelles brèves','السكون والشدة · Soukoun et chadda','التنوين · Le tanwîn','قراءة نصوص قصيرة · Lire de petits textes'],
+ 'ar|Coran & Tajwîd':['سورة الفاتحة · Sourate Al-Fâtiha','قصار السور · Les courtes sourates (Juz\' \'Amma)','أحكام النون الساكنة والتنوين · Le noun sâkin et le tanwîn','أحكام الميم الساكنة · Le mîm sâkin','المدود · Les prolongations'],
+ 'ar|Hadith':['إنما الأعمال بالنيات · Les actes valent par les intentions','حب الخير للآخرين · Aimer pour son frère','الدين النصيحة · La religion est le bon conseil','قول الخير أو الصمت · Dire du bien ou se taire','بر الوالدين · La bonté envers les parents'],
+ 'ar|Qisas al-anbiyâ':['آدم عليه السلام · Adam','نوح عليه السلام · Noé (Nûh)','إبراهيم عليه السلام · Abraham (Ibrâhîm)','يوسف عليه السلام · Joseph (Yûsuf)','موسى عليه السلام · Moïse (Mûsâ)','عيسى عليه السلام · Jésus (\'Îsâ)'],
+ 'ar|Sîra':['مولد النبي ﷺ · La naissance du Prophète','بدء الوحي · Le début de la révélation','الهجرة إلى المدينة · L\'Hégire','فتح مكة · L\'ouverture de La Mecque'],
+ 'ar|Fiqh':['أركان الإسلام · Les piliers de l\'islam','الطهارة والوضوء · La purification et les ablutions','الصلاة · La prière','الصوم · Le jeûne','الزكاة · L\'aumône légale'],
+ 'ar|Tawhîd':['أركان الإيمان · Les piliers de la foi','الإيمان بالرسل · Croire aux messagers','الإيمان بالكتب · Croire aux Livres révélés'],
+ 'ar|Akhlâq':['الصدق · La sincérité','الأمانة · L\'honnêteté','احترام المعلم · Respecter le maître','آداب الطعام · Les bonnes manières à table']});
+Object.assign(LESSONS,{
+'ar|Nahw|0':{dur:7,html:`<p>En arabe, tout mot (<b>الكلمة</b>) appartient à l'une de trois catégories.</p>
+<span class="ar" lang="ar">الكلمةُ ثلاثةُ أقسامٍ: اسمٌ، وفعلٌ، وحرفٌ.</span><span class="tr">Le mot a trois catégories : le nom, le verbe et la particule.</span>
+<table><tr><td class="ar" lang="ar">الاسم</td><td>Le <b>nom</b> : personne, chose, lieu…</td><td class="ar" lang="ar">كِتَابٌ، مَدْرَسَةٌ، دَاكَار</td></tr>
+<tr><td class="ar" lang="ar">الفعل</td><td>Le <b>verbe</b> : une action liée au temps</td><td class="ar" lang="ar">كَتَبَ، يَقْرَأُ، اِجْلِسْ</td></tr>
+<tr><td class="ar" lang="ar">الحرف</td><td>La <b>particule</b> : n'a de sens qu'avec un autre mot</td><td class="ar" lang="ar">فِي، مِنْ، إِلَى، عَلَى</td></tr></table>
+<div class="box"><b>Astuce :</b> le nom accepte « ال » et le tanwîn (كتابٌ). Le verbe accepte « قد » ou « سـ » (سيكتبُ).</div>
+<div class="ex"><b>Exercice :</b> classe les mots de la phrase : <span class="ar" lang="ar">ذَهَبَ التِّلْمِيذُ إِلَى الْمَدْرَسَةِ</span>ذَهَبَ = verbe · التلميذ = nom · إلى = particule · المدرسة = nom.</div>`},
+'ar|Nahw|1':{dur:7,html:`<p>La <b>phrase nominale</b> (الجملة الاسمية) commence par un nom. Elle a deux parties : le <b>mubtada'</b> (sujet) et le <b>khabar</b> (attribut).</p>
+<span class="ar" lang="ar">الْمُبْتَدَأُ وَالْخَبَرُ مَرْفُوعَانِ.</span><span class="tr">Le mubtada' et le khabar sont au cas nominatif (marfû').</span>
+<div class="ex"><span class="ar" lang="ar">الْعِلْمُ نُورٌ</span><span class="tr">La science est une lumière. العلمُ = mubtada' · نورٌ = khabar.</span></div>
+<div class="ex"><span class="ar" lang="ar">الْمُعَلِّمُ حَاضِرٌ</span><span class="tr">Le maître est présent.</span></div>
+<div class="box">Le signe du nominatif au singulier est la <b>damma</b> ( ـُ ).</div>`},
+'ar|Sarf|0':{dur:6,html:`<p>Le <b>fi\'l mâdî</b> (الفعل الماضي) exprime une action terminée. Voici le verbe <span class="ar" lang="ar" style="display:inline;font-size:1.2em">كَتَبَ</span> (écrire) :</p>
+<table>${[['أَنَا','كَتَبْتُ','J\'ai écrit'],['أَنْتَ','كَتَبْتَ','Tu as écrit (m.)'],['أَنْتِ','كَتَبْتِ','Tu as écrit (f.)'],['هُوَ','كَتَبَ','Il a écrit'],['هِيَ','كَتَبَتْ','Elle a écrit'],['نَحْنُ','كَتَبْنَا','Nous avons écrit'],['أَنْتُمْ','كَتَبْتُمْ','Vous avez écrit'],['هُمْ','كَتَبُوا','Ils ont écrit']].map(r=>`<tr><td class="ar" lang="ar">${r[0]}</td><td class="ar" lang="ar">${r[1]}</td><td>${r[2]}</td></tr>`).join('')}</table>
+<div class="box">Toutes les terminaisons s'ajoutent à la racine <b>ك ت ب</b>.</div>`},
+'ar|Coran & Tajwîd|2':{dur:8,html:`<p>Le <b>noun sâkin</b> (نْ) et le <b>tanwîn</b> (ـًـٍـٌ) suivent quatre règles selon la lettre qui vient après.</p>
+<table><tr><td class="ar" lang="ar">الإظهار</td><td><b>Prononcer clairement</b> devant les 6 lettres de la gorge : ء هـ ع ح غ خ</td></tr>
+<tr><td class="ar" lang="ar">الإدغام</td><td><b>Fusionner</b> devant les lettres du mot <span lang="ar" class="ar" style="display:inline">يَرْمَلُونَ</span></td></tr>
+<tr><td class="ar" lang="ar">الإقلاب</td><td><b>Transformer</b> en mîm devant la lettre ب</td></tr>
+<tr><td class="ar" lang="ar">الإخفاء</td><td><b>Cacher</b> (nasaliser) devant les 15 autres lettres</td></tr></table>
+<div class="ex"><b>Exemples :</b><span class="ar" lang="ar">مِنْ هَادٍ (إظهار) · مِنْ بَعْدِ (إقلاب) · مَنْ يَقُولُ (إدغام) · مِنْ كُلِّ (إخفاء)</span></div>`},
+'ar|Hadith|0':{dur:6,html:`<div class="verse"><span class="ar" lang="ar">عَنْ عُمَرَ بْنِ الْخَطَّابِ رَضِيَ اللَّهُ عَنْهُ قَالَ: سَمِعْتُ رَسُولَ اللَّهِ ﷺ يَقُولُ: «إِنَّمَا الْأَعْمَالُ بِالنِّيَّاتِ، وَإِنَّمَا لِكُلِّ امْرِئٍ مَا نَوَى»</span><p class="muted">رواه البخاري ومسلم · Rapporté par Al-Bukhârî et Muslim</p></div>
+<h4>Traduction</h4><p>« Les actes ne valent que par les intentions, et chacun n'aura que ce qu'il a eu l'intention de faire. »</p>
+<h4>Ce que nous apprenons</h4><ul><li>Avant d'agir, on vérifie pourquoi on le fait.</li><li>Une action ordinaire (étudier, aider ses parents) devient une bonne œuvre avec une bonne intention.</li><li>Ce hadith ouvre de nombreux recueils, comme le livre des 40 hadiths d'An-Nawawî.</li></ul>`},
+'ar|Qisas al-anbiyâ|1':{dur:6,html:`<span class="ar" lang="ar">أَرْسَلَ اللَّهُ نُوحًا عَلَيْهِ السَّلَامُ إِلَى قَوْمِهِ يَدْعُوهُمْ إِلَى عِبَادَةِ اللَّهِ وَحْدَهُ.</span><span class="tr">Allah envoya Noé (Nûh) à son peuple pour l'appeler à adorer Allah seul.</span>
+<h4>L'histoire</h4><ul><li>Nûh appelle son peuple pendant très longtemps : le Coran parle de « mille ans moins cinquante ».</li><li>Peu de gens le croient. Allah lui ordonne de construire une grande <b>arche</b> (السفينة).</li><li>Il y fait monter les croyants et un couple de chaque espèce.</li><li>Le <b>déluge</b> (الطوفان) arrive ; les croyants sont sauvés.</li></ul>
+<div class="box"><b>Leçon :</b> la patience et la persévérance dans le bien.</div>`},
+'ar|Fiqh|0':{dur:6,html:`<div class="verse"><span class="ar" lang="ar">«بُنِيَ الْإِسْلَامُ عَلَى خَمْسٍ»</span><p class="muted">L'islam est bâti sur cinq piliers · رواه البخاري ومسلم</p></div>
+<table>${[['الشَّهَادَتَانِ','La profession de foi'],['إِقَامُ الصَّلَاةِ','La prière'],['إِيتَاءُ الزَّكَاةِ','L\'aumône légale'],['صَوْمُ رَمَضَانَ','Le jeûne du Ramadan'],['حَجُّ الْبَيْتِ','Le pèlerinage, pour qui en a les moyens']].map((r,i)=>`<tr><td><b>${i+1}</b></td><td class="ar" lang="ar">${r[0]}</td><td>${r[1]}</td></tr>`).join('')}</table>`}
+});
+Object.assign(BANK,{
+'ar|Nahw':[
+ ['أَقْسَامُ الْكَلِمَةِ ثَلَاثَةٌ:',['اسم وفعل وحرف','مبتدأ وخبر وفاعل','ماض ومضارع وأمر','مفرد ومثنى وجمع'],0,'Le mot est un nom, un verbe ou une particule.'],
+ ['حُكْمُ الْمُبْتَدَأِ وَالْخَبَرِ:',['منصوبان','مرفوعان','مجروران','مجزومان'],1,'Mubtada\' et khabar sont marfû\' (nominatif).'],
+ ['الْفَاعِلُ دَائِمًا:',['مرفوع','منصوب','مجرور','مجزوم'],0,'Le sujet du verbe (fâ\'il) est toujours marfû\'.'],
+ ['«قَرَأَ التِّلْمِيذُ الدَّرْسَ» — كَلِمَةُ «الدَّرْسَ»:',['فاعل','مفعول به','مبتدأ','خبر'],1,'Elle subit l\'action : c\'est le complément d\'objet (maf\'ûl bihi), mansûb.'],
+ ['«فِي» مِنْ:',['الأسماء','الأفعال','حروف الجر','الضمائر'],2,'في est une préposition (harf jarr).'],
+ ['الِاسْمُ بَعْدَ حَرْفِ الْجَرِّ يَكُونُ:',['مرفوعا','منصوبا','مجرورا','ساكنا'],2,'Après une préposition, le nom est majrûr (génitif).']],
+'ar|Sarf':[
+ ['«كَتَبَ» فِعْلٌ:',['ماض','مضارع','أمر','اسم'],0,'C\'est un verbe à l\'accompli (passé).'],
+ ['الْمُضَارِعُ مِنْ «كَتَبَ»:',['كاتب','يكتب','اكتب','مكتوب'],1,'يَكْتُبُ = il écrit.'],
+ ['الْأَمْرُ مِنْ «جَلَسَ»:',['يجلس','جالس','اجلس','جلوس'],2,'اِجْلِسْ = assieds-toi.'],
+ ['هُمْ … (كَتَبَ، مَاضٍ)',['كتبوا','كتبنا','كتبتم','كتبت'],0,'هُمْ كَتَبُوا = ils ont écrit.'],
+ ['الْمِيزَانُ الصَّرْفِيُّ هُوَ:',['فعل','كتب','فاعل','مفعول'],0,'Le schème de base est فَعَلَ.']],
+'ar|Qirâ’a':[
+ ['عَدَدُ الْحُرُوفِ الْهِجَائِيَّةِ:',['26','28','30','24'],1,'L\'alphabet arabe compte 28 lettres.'],
+ ['الْحَرَكَةُ فِي «بَ» هِيَ:',['الضمة','الكسرة','الفتحة','السكون'],2,'Le petit trait au-dessus est la fatha.'],
+ ['«بِ» عَلَيْهَا:',['فتحة','كسرة','ضمة','شدة'],1,'Le trait en dessous est la kasra.']],
+'ar|Coran & Tajwîd':[
+ ['أَوَّلُ سُورَةٍ فِي الْمُصْحَفِ:',['البقرة','الفاتحة','الإخلاص','الناس'],1,'Al-Fâtiha ouvre le Coran.'],
+ ['آخِرُ سُورَةٍ فِي الْمُصْحَفِ:',['الفلق','الإخلاص','الناس','الكوثر'],2,'An-Nâs est la dernière sourate.'],
+ ['عَدَدُ آيَاتِ سُورَةِ الْفَاتِحَةِ:',['5','6','7','8'],2,'Al-Fâtiha compte 7 versets.'],
+ ['عَدَدُ سُوَرِ الْقُرْآنِ الْكَرِيمِ:',['99','114','120','110'],1,'Le Coran compte 114 sourates.'],
+ ['النُّونُ السَّاكِنَةُ قَبْلَ الْبَاءِ حُكْمُهَا:',['إظهار','إدغام','إقلاب','إخفاء'],2,'Devant ب, le noun devient mîm : c\'est l\'iqlâb.'],
+ ['حُرُوفُ الْإِظْهَارِ الْحَلْقِيِّ عَدَدُهَا:',['4','6','15','2'],1,'ء هـ ع ح غ خ : six lettres de la gorge.']],
+'ar|Hadith':[
+ ['أَكْمِلْ: «إِنَّمَا الْأَعْمَالُ …»',['بالنيات','بالخواتيم','بالأقوال','بالصبر'],0,'« Les actes ne valent que par les intentions. »'],
+ ['رَاوِي حَدِيثِ «إِنَّمَا الْأَعْمَالُ بِالنِّيَّاتِ»:',['أبو هريرة','عمر بن الخطاب','أنس بن مالك','عائشة'],1,'Rapporté par \'Umar ibn al-Khattâb.'],
+ ['أَكْمِلْ: «الدِّينُ …»',['النصيحة','الصلاة','العلم','الصبر'],0,'« La religion est le bon conseil » (Muslim).'],
+ ['أَكْمِلْ: «لَا يُؤْمِنُ أَحَدُكُمْ حَتَّى يُحِبَّ لِأَخِيهِ …»',['ما يحب لنفسه','الخير كله','المال','السلام'],0,'« …ce qu\'il aime pour lui-même » (Bukhârî et Muslim).'],
+ ['أَكْمِلْ: «فَلْيَقُلْ خَيْرًا أَوْ …»',['ليصمت','ليذهب','ليصبر','ليتعلم'],0,'« Qu\'il dise du bien ou qu\'il se taise. »']],
+'ar|Qisas al-anbiyâ':[
+ ['أَوَّلُ الْأَنْبِيَاءِ:',['نوح','آدم','إبراهيم','موسى'],1,'Adam est le premier homme et le premier prophète.'],
+ ['النَّبِيُّ الَّذِي صَنَعَ السَّفِينَةَ:',['نوح','يونس','هود','صالح'],0,'Nûh (Noé) construisit l\'arche.'],
+ ['خَلِيلُ اللَّهِ هُوَ:',['موسى','إبراهيم','عيسى','يوسف'],1,'Ibrâhîm est appelé l\'ami intime d\'Allah.'],
+ ['كَلِيمُ اللَّهِ هُوَ:',['موسى','هارون','داود','سليمان'],0,'Allah a parlé à Mûsâ (Moïse).'],
+ ['الْكِتَابُ الَّذِي نَزَلَ عَلَى مُوسَى:',['الإنجيل','الزبور','التوراة','القرآن'],2,'La Torah (At-Tawrât).'],
+ ['النَّبِيُّ الَّذِي الْتَقَمَهُ الْحُوتُ:',['يونس','يوسف','أيوب','زكريا'],0,'Yûnus (Jonas).'],
+ ['عَدَدُ الْأَنْبِيَاءِ الْمَذْكُورِينَ فِي الْقُرْآنِ:',['25','10','40','12'],0,'25 prophètes sont cités par leur nom dans le Coran.']],
+'ar|Sîra':[
+ ['وُلِدَ النَّبِيُّ ﷺ فِي:',['المدينة','مكة','الطائف','القدس'],1,'À La Mecque.'],
+ ['يُسَمَّى عَامُ مَوْلِدِهِ ﷺ:',['عام الفيل','عام الحزن','عام الفتح','عام الهجرة'],0,'L\'Année de l\'Éléphant.'],
+ ['نَزَلَ الْوَحْيُ أَوَّلَ مَرَّةٍ فِي:',['غار ثور','غار حراء','المسجد الحرام','جبل أحد'],1,'Dans la grotte de Hirâ\'.'],
+ ['هَاجَرَ النَّبِيُّ ﷺ مِنْ مَكَّةَ إِلَى:',['الحبشة','المدينة','الطائف','الشام'],1,'L\'Hégire vers Médine.']],
+'ar|Fiqh':[
+ ['عَدَدُ أَرْكَانِ الْإِسْلَامِ:',['3','5','6','7'],1,'Cinq piliers.'],
+ ['عَدَدُ الصَّلَوَاتِ الْمَفْرُوضَةِ فِي الْيَوْمِ:',['3','4','5','6'],2,'Cinq prières obligatoires.'],
+ ['عَدَدُ رَكَعَاتِ صَلَاةِ الْمَغْرِبِ:',['2','3','4','1'],1,'Le Maghrib compte 3 rak\'a.'],
+ ['عَدَدُ رَكَعَاتِ صَلَاةِ الصُّبْحِ:',['2','3','4','1'],0,'Le Subh (Fajr) compte 2 rak\'a.'],
+ ['صَوْمُ رَمَضَانَ رُكْنٌ مِنْ أَرْكَانِ:',['الإيمان','الإسلام','الإحسان','الوضوء'],1,'C\'est un pilier de l\'islam.']],
+'ar|Tawhîd':[
+ ['عَدَدُ أَرْكَانِ الْإِيمَانِ:',['5','6','7','4'],1,'Six piliers de la foi.'],
+ ['الْكِتَابُ الَّذِي نَزَلَ عَلَى عِيسَى:',['التوراة','الإنجيل','الزبور','القرآن'],1,'L\'Évangile (Al-Injîl).'],
+ ['الْكِتَابُ الَّذِي نَزَلَ عَلَى دَاوُدَ:',['الزبور','التوراة','الإنجيل','الصحف'],0,'Les Psaumes (Az-Zabûr).']],
+'ar|Akhlâq':[
+ ['«آيَةُ الْمُنَافِقِ ثَلَاثٌ: إِذَا حَدَّثَ …»',['كذب','صدق','سكت','ضحك'],0,'« …il ment, s\'il promet il ne tient pas, si on lui confie quelque chose il trahit. »'],
+ ['ضِدُّ الصِّدْقِ:',['الأمانة','الكذب','الصبر','الكرم'],1,'Le contraire de la sincérité est le mensonge.'],
+ ['قَبْلَ الْأَكْلِ نَقُولُ:',['الحمد لله','بسم الله','السلام عليكم','إن شاء الله'],1,'On commence par « Bismillâh ».']]
+});
+
+// ---------- données de démonstration ----------
+function seedData(){
+ const school={code:'PIONNIERS',nom:'Groupe scolaire Les Pionniers',ville:'Dakar, Parcelles Assainies',directeur:'M. Ibrahima Diop',tel:'77 000 00 00',wave:'77 123 45 67',om:'78 123 45 67',frais:15000,periode:'semestre'};
+ const classes=[
+  {id:'c1',nom:'CM2 A',niveau:'CM2',prof:'Mme Ndèye Ndiaye',code:'CM2A-4821',bareme:10,
+   matieres:[['Français',3],['Mathématiques',3],['Sciences (IST)',2],['Histoire',1],['Géographie',1],['Éducation civique',1]]},
+  {id:'c3',nom:'CM1 Franco-arabe',niveau:'CM1',fil:'fa',prof:'Oustaz Moustapha Mbaye',code:'CM1FA-2604',bareme:10,
+   matieres:[['Français',2],['Mathématiques',2],['Nahw',2],['Coran & Tajwîd',2],['Fiqh',1],['Hadith',1],['Qisas al-anbiyâ',1]]},
+  {id:'c2',nom:'3e B',niveau:'3e',prof:'M. Babacar Sarr',code:'3EB-7390',bareme:20,
+   matieres:[['Français',3],['Mathématiques',4],['SVT',2],['Sciences physiques',2],['Histoire-Géo',2],['Anglais',2],['Éducation civique',1]]}];
+ const names={c3:['Sokhna Diop','Mouhamed Ndao','Fatima Badji','Ibrahima Mbacké','Aminata Kébé','Oumar Sow','Khadija Fall','Elhadji Touré'],c1:['Fatou Diallo','Moussa Ba','Aïssatou Sow','Ibrahima Fall','Khady Ndiaye','Ousmane Sy','Mariama Diop','Cheikh Mbaye','Bineta Faye','Modou Thiam'],
+              c2:['Abdou Diallo','Ndèye Fatou Seck','Mamadou Cissé','Astou Thiam','Pape Faye','Coumba Ndour','Lamine Gaye','Rokhaya Sarr','Alioune Kane','Dieynaba Ly','Saliou Mbengue','Yacine Diouf']};
+ const eleves=[];
+ for(const c of classes){names[c.id].forEach((n,i)=>eleves.push({id:c.id+'-'+i,classe:c.id,nom:n,sexe:/^(Fatou|Aïssatou|Khady|Mariama|Bineta|Ndèye|Astou|Coumba|Rokhaya|Dieynaba|Yacine)/.test(n)?'F':'M',codeParent:'PAR-'+(4100+eleves.length*37),points:Math.floor(seeded(n)()*900)}))}
+ const notes=[];
+ for(const e of eleves){const c=classes.find(x=>x.id===e.classe);const r=seeded(e.nom+'notes');const lvl=.45+r()*.45;
+  for(const [m] of c.matieres){const b=c.bareme;const g=()=>Math.max(0,Math.min(b,Math.round((lvl*b+(r()-.5)*b*.35)*2)/2));
+   notes.push({id:uid(),eleve:e.id,classe:c.id,matiere:m,type:'devoir',periode:1,note:g(),date:'2026-10-14'});
+   notes.push({id:uid(),eleve:e.id,classe:c.id,matiere:m,type:'devoir',periode:1,note:g(),date:'2026-11-04'});
+   if(r()>.25)notes.push({id:uid(),eleve:e.id,classe:c.id,matiere:m,type:'compo',periode:1,note:g(),date:'2026-11-10'});}}
+ const absences=[];const days=['2026-11-03','2026-11-04','2026-11-05','2026-11-06','2026-11-07','2026-11-10','2026-11-11','2026-11-12','2026-11-13'];
+ for(const e of eleves){const r=seeded(e.nom+'abs');for(const d of days){const x=r();absences.push({eleve:e.id,classe:e.classe,date:d,statut:x<.06?'absent':x<.11?'retard':'present'})}}
+ const mois=['Oct','Nov','Déc','Janv','Févr','Mars','Avr','Mai','Juin'];
+ const paiements=[];for(const e of eleves){const r=seeded(e.nom+'pay');mois.forEach((m,i)=>paiements.push({eleve:e.id,mois:m,paye:i===0?true:i===1?r()>.3:false,ref:''}))}
+ const devoirs=[
+  {id:uid(),classe:'c1',matiere:'Mathématiques',titre:'Exercices 3 à 6 page 42 (fractions)',desc:'Bien écrire les étapes du calcul.',limite:'2026-11-17'},
+  {id:uid(),classe:'c1',matiere:'Français',titre:'Apprendre la conjugaison du passé composé',desc:'Verbes être, avoir, aller, finir.',limite:'2026-11-18'},
+  {id:uid(),classe:'c2',matiere:'Mathématiques',titre:'Série Thalès n°2',desc:'Exercices 1 à 4. Préparation BFEM blanc.',limite:'2026-11-16'},
+  {id:uid(),classe:'c2',matiere:'SVT',titre:'Schéma de l\'appareil digestif',desc:'À rendre sur feuille double, légendé.',limite:'2026-11-19'},
+  {id:uid(),classe:'c2',matiere:'Anglais',titre:'Write 10 sentences in the simple past',desc:'',limite:'2026-11-20'}];
+ const comportement=[
+  {id:uid(),eleve:'c2-0',type:'positif',texte:'Très bonne participation en mathématiques.',date:'2026-11-12'},
+  {id:uid(),eleve:'c1-0',type:'positif',texte:'A aidé un camarade en lecture.',date:'2026-11-10'},
+  {id:uid(),eleve:'c2-4',type:'negatif',texte:'Bavardages répétés pendant le cours.',date:'2026-11-11'}];
+ const messages=[
+  {id:'th1',eleve:'c2-0',avec:'M. Babacar Sarr',msgs:[{de:'them',txt:'Bonjour, Abdou progresse bien en maths. Il doit encore travailler l\'anglais.',d:'12 nov.'},{de:'me',txt:'Merci beaucoup monsieur, nous allons l\'aider à la maison.',d:'12 nov.'}]},
+  {id:'th2',eleve:'c1-0',avec:'Mme Ndèye Ndiaye',msgs:[{de:'them',txt:'Fatou a oublié son cahier de français deux fois cette semaine.',d:'10 nov.'}]}];
+ const sondages=[{id:'s1',question:'Sortie pédagogique à l\'île de Gorée le samedi 13 décembre : votre enfant participera-t-il ?',reponses:{oui:18,non:3,peut_etre:5},maReponse:null,actif:true}];
+ const annonces=[{id:uid(),titre:'Compositions du 1er semestre',txt:'Les compositions auront lieu du 8 au 12 décembre. Les élèves doivent être à jour de leurs paiements.',date:'2026-11-12'},
+  {id:uid(),titre:'Réunion des parents',txt:'Samedi 22 novembre à 10 h dans la cour de l\'école.',date:'2026-11-09'}];
+ const inscriptions=[
+  {id:uid(),enfant:'Maïmouna Ndiaye',age:11,niveau:'CM2',classe:'c1',parent:'Aminata Ndiaye',tel:'77 654 32 10',ref:'WV-88213',statut:'en_attente',date:'2026-11-13'},
+  {id:uid(),enfant:'Babacar Seck',age:15,niveau:'3e',classe:'c2',parent:'Omar Seck',tel:'76 111 22 33',ref:'OM-55102',statut:'en_attente',date:'2026-11-12'},
+  {id:uid(),enfant:'Awa Cissé',age:10,niveau:'CM2',classe:'c1',parent:'Daba Cissé',tel:'70 987 65 43',ref:'',statut:'en_attente',date:'2026-11-11'}];
+ return {school,classes,eleves,notes,absences,paiements,mois,devoirs,comportement,messages,sondages,annonces,inscriptions,resultats:[],codes:['JANG-2026','BFEM-PRO','BAC-PRO']};
+}
+
+// ---------- état ----------
+let S;
+const DEF=()=>({lang:'fr',fs:1,contrast:false,saver:false,role:null,tab:'home',user:null,view:null,data:seedData(),
+ student:{prenom:'',niveau:'3e',fil:'classique',streak:4,points:620,done:{},premium:false,classe:null,goal:3,today:1}});
+function load(){try{const r=localStorage.getItem('sunujang2');if(r){S=JSON.parse(r);return}}catch(e){}S=DEF()}
+function save(){try{localStorage.setItem('sunujang2',JSON.stringify(S))}catch(e){}}
+load();
+
+// ---------- calculs scolaires ----------
+// Moyenne d'une matière = (moyenne des devoirs + 2 × composition) / 3 (usage courant au Sénégal)
+function moyMatiere(eleveId,mat,per=1){
+ const ns=S.data.notes.filter(n=>n.eleve===eleveId&&n.matiere===mat&&n.periode===per);
+ const dv=ns.filter(n=>n.type==='devoir').map(n=>n.note), cp=ns.filter(n=>n.type==='compo').map(n=>n.note);
+ const md=dv.length?dv.reduce((a,b)=>a+b,0)/dv.length:null, mc=cp.length?cp.reduce((a,b)=>a+b,0)/cp.length:null;
+ if(md==null&&mc==null)return {md,mc,moy:null};
+ const moy=mc==null?md:md==null?mc:(md+2*mc)/3;return {md,mc,moy};
+}
+function bulletin(eleveId,per=1){
+ const e=S.data.eleves.find(x=>x.id===eleveId);const c=S.data.classes.find(x=>x.id===e.classe);
+ let tot=0,coefs=0;const lignes=c.matieres.map(([m,coef])=>{const r=moyMatiere(eleveId,m,per);if(r.moy!=null){tot+=r.moy*coef;coefs+=coef}return {m,coef,...r}});
+ const moy=coefs?tot/coefs:null;
+ const all=S.data.eleves.filter(x=>x.classe===c.id).map(x=>({id:x.id,m:moyGen(x.id,per)})).filter(x=>x.m!=null).sort((a,b)=>b.m-a.m);
+ const rang=all.findIndex(x=>x.id===eleveId)+1;
+ return {e,c,lignes,moy,rang,effectif:all.length,mention:mention(moy,c.bareme),classMoy:all.length?all.reduce((a,b)=>a+b.m,0)/all.length:null};
+}
+function moyGen(id,per=1){const e=S.data.eleves.find(x=>x.id===id);const c=S.data.classes.find(x=>x.id===e.classe);let t=0,k=0;for(const [m,coef] of c.matieres){const r=moyMatiere(id,m,per);if(r.moy!=null){t+=r.moy*coef;k+=coef}}return k?t/k:null}
+function mention(m,b){if(m==null)return '';const x=m/b*20;return x>=16?'Félicitations':x>=14?'Encouragements':x>=12?'Tableau d\'honneur':x>=10?'Passable':'Doit redoubler d\'efforts'}
+const rangTxt=r=>r===1?'1er':r+'e';
+function absCount(id){const a=S.data.absences.filter(x=>x.eleve===id);return {abs:a.filter(x=>x.statut==='absent').length,ret:a.filter(x=>x.statut==='retard').length,tot:a.length}}
+
+// ---------- rendu ----------
+function setRootClass(){document.documentElement.classList.toggle('contrast',!!S.contrast);document.documentElement.style.setProperty('--fs',S.fs);document.documentElement.lang=S.lang==='wo'?'wo':'fr'}
+function render(){
+ setRootClass();
+ const root=$('#root');
+ if(!S.role){root.innerHTML=viewWelcome();return}
+ if(!S.user){root.innerHTML=`<div class="app">${viewLogin()}</div>`;return}
+ const r=ROLES[S.role];
+ const body=S.view?S.view.fn(S.view):r.tabs.find(x=>x.id===S.tab).fn();
+ root.innerHTML=`<div class="app">${S.view?'':topbar()}<main id="main">${body}</main>${S.view&&S.view.hideNav?'':nav()}</div>`;
+}
+function go(tab){S.tab=tab;S.view=null;save();render();scrollTo(0,0)}
+function open(fn,args={}){S.view={fn:VIEWS[fn],name:fn,...args};render();scrollTo(0,0)}
+// VIEWS are stored by name so state survives reload
+function restoreView(){if(S.view&&S.view.name)S.view.fn=VIEWS[S.view.name];else S.view=null}
+function back(){S.view=null;render()}
+function topbar(){
+ const u=S.user;const online=navigator.onLine!==false;
+ return `<header class="top"><div class="who"><div class="sub">${esc(u.sub)}</div><div class="hello">${t('hello')}, ${esc(u.prenom)}</div></div>
+ <span class="net ${online?'':'off'}" title="${online?'Synchronisé':'Hors connexion : tes données seront envoyées plus tard'}"><i></i>${online?'En ligne':'Hors ligne'}</span>
+ <button class="iconbtn" aria-label="Notifications" onclick="sheetNotifs()">${I('bell')}<span class="dot"></span></button>
+ <button class="iconbtn" aria-label="Réglages" onclick="sheetSettings()">${I('gear')}</button></header>`;
+}
+function nav(){
+ const r=ROLES[S.role];
+ return `<nav class="nav" aria-label="Navigation">${r.tabs.map(x=>`<button class="${S.tab===x.id&&!S.view?'on':''}" onclick="go('${x.id}')" aria-current="${S.tab===x.id?'page':'false'}"><span class="pill">${I(x.icon)}</span>${t(x.label)}</button>`).join('')}</nav>`;
+}
+function backbar(title,sub=''){return `<header class="top"><button class="iconbtn" aria-label="Retour" onclick="back()">${I('back')}</button><div class="who"><div class="hello" style="font-size:1.15rem">${esc(title)}</div>${sub?`<div class="sub">${esc(sub)}</div>`:''}</div></header>`}
+
+// ---------- accueil / connexion ----------
+function viewWelcome(){
+ const roles=[['student','user'],['parent','users'],['teacher','clip'],['director','school']];
+ return `<div class="app welcome">${WAX('#F4A62A','#13715A')}<div class="inner">
+ <div class="brand"><div class="logo">${I('book',24)}</div>Sunu Jàng</div>
+ <h1>${t('welcome')}</h1><p class="lead">${t('lead')}</p>
+ <div class="roles">${roles.map(([r,ic])=>`<button class="role" onclick="pickRole('${r}')">${I(ic)}<div><b>${t(r)}</b><span>${t(r+'S')}</span></div></button>`).join('')}</div>
+ <div class="langs" role="group" aria-label="Langue"><button class="${S.lang==='fr'?'on':''}" onclick="setLang('fr')">Français</button><button class="${S.lang==='wo'?'on':''}" onclick="setLang('wo')">Wolof</button></div>
+ </div></div>`;
+}
+function pickRole(r){S.role=r;S.user=null;save();render()}
+function setLang(l){S.lang=l;save();render()}
+function trackPick(get,set){return `<div class="track" role="group" aria-label="Filière"><button class="${get!=='fa'?'on':''}" onclick="${set}='classique';keepForm();render()"><b>Classique</b><span>Programme en français</span></button><button class="${get==='fa'?'on':''}" onclick="${set}='fa';keepForm();render()"><b>Franco-arabe <span lang="ar" class="ar">فرنسي-عربي</span></b><span>+ arabe, Coran, hadith, fiqh…</span></button></div>`}
+// garde les champs tapés quand on re-dessine l'écran
+function keepForm(){S._form=S._form||{};document.querySelectorAll('main input,main select').forEach(i=>{if(i.id)S._form[i.id]=i.value})}
+const fv=(id,d='')=>esc((S._form&&S._form[id])??d);
+function levelSelect(id,val){return `<select class="input" id="${id}">${['elem','moyen','lycee'].map(cy=>`<optgroup label="${CYCLE_NAME[cy]}">${LEVELS.filter(l=>l.cycle===cy).map(l=>`<option ${l.id===val?'selected':''}>${l.id}</option>`).join('')}</optgroup>`).join('')}</select>`}
+function viewLogin(){
+ const r=S.role;const mode=S.loginMode||'new';let form='';
+ S._tmp=S._tmp||{fil:'classique'};
+ const tabs=r==='student'?'':`<div class="tabs2" role="group"><button class="${mode==='new'?'on':''}" onclick="keepForm();S.loginMode='new';render()">Nouveau compte</button><button class="${mode==='code'?'on':''}" onclick="keepForm();S.loginMode='code';render()">J'ai un code</button></div>`;
+ if(r==='student'){
+  const lv=S.student.niveau;
+  form=`<p class="muted">Gratuit, sans code. Tu peux commencer tout de suite.</p><label class="f" for="pn">Ton prénom</label><input class="input" id="pn" placeholder="Ex. Abdou" value="${fv('pn',S.student.prenom)}" autocomplete="given-name">
+  <label class="f">Ta classe</label>${['elem','moyen','lycee'].map(cy=>`<div class="cycle">${CYCLE_NAME[cy]}</div><div class="levels">${LEVELS.filter(l=>l.cycle===cy).map(l=>`<button class="${lv===l.id?'on':''}" onclick="keepForm();S.student.niveau='${l.id}';render()">${l.id}</button>`).join('')}</div>`).join('')}
+  <label class="f">Ton école</label>${trackPick(S.student.fil,'S.student.fil')}
+  <label class="f" for="cc">Code de ta classe <span class="muted">(facultatif)</span></label><input class="input" id="cc" placeholder="Ex. 3EB-7390" value="${fv('cc')}" autocapitalize="characters"><p class="muted" style="margin-top:6px">Avec ce code, tu verras tes devoirs et tes notes.</p>`;
+ } else if(mode==='code'){
+  const lab={parent:['Code parent','Reçu par SMS ou auprès de l\'école','PAR-4100'],teacher:['Code de classe','Donné par la direction ou créé par toi','3EB-7390'],director:['Code établissement','Reçu à la création de l\'école','PIONNIERS']}[r];
+  form=`<label class="f" for="cd">${lab[0]}</label><input class="input" id="cd" placeholder="${lab[2]}" value="${fv('cd')}" autocapitalize="characters"><p class="muted" style="margin-top:6px">${lab[1]}.</p>`;
+ } else if(r==='parent'){
+  form=`<p class="muted">Gratuit. Vous ajouterez votre enfant juste après.</p><label class="f" for="pnm">Votre nom</label><input class="input" id="pnm" placeholder="Ex. Aminata Ndiaye" value="${fv('pnm')}"><label class="f" for="ptel">Téléphone</label><input class="input" id="ptel" inputmode="tel" placeholder="77 000 00 00" value="${fv('ptel')}">`;
+ } else if(r==='teacher'){
+  form=`<p class="muted">Créez votre classe en 1 minute, avec ou sans école inscrite.</p><label class="f" for="tnm">Votre nom</label><input class="input" id="tnm" placeholder="Ex. Mme Awa Fall / Oustaz Ba" value="${fv('tnm')}"><label class="f" for="ttel">Téléphone</label><input class="input" id="ttel" inputmode="tel" placeholder="77 000 00 00" value="${fv('ttel')}">
+  <label class="f" for="tcl">Nom de votre classe</label><input class="input" id="tcl" placeholder="Ex. CM2 B" value="${fv('tcl')}"><label class="f" for="tlv">Niveau</label>${levelSelect('tlv',S._form&&S._form.tlv||'CM2')}
+  <label class="f">Type de classe</label>${trackPick(S._tmp.fil,'S._tmp.fil')}`;
+ } else {
+  form=`<p class="muted">Inscrivez votre établissement vous-même : public, privé, franco-arabe ou daara moderne.</p><label class="f" for="snm">Nom de l'établissement</label><input class="input" id="snm" placeholder="Ex. École franco-arabe Al-Falah" value="${fv('snm')}"><label class="f" for="svl">Ville / quartier</label><input class="input" id="svl" placeholder="Ex. Thiès, Grand Standing" value="${fv('svl')}">
+  <label class="f" for="sdr">Nom du directeur ou de la directrice</label><input class="input" id="sdr" value="${fv('sdr')}"><label class="f" for="stl">Téléphone</label><input class="input" id="stl" inputmode="tel" placeholder="77 000 00 00" value="${fv('stl')}">
+  <label class="f" for="sfr">Mensualité (F CFA, facultatif)</label><input class="input" id="sfr" inputmode="numeric" placeholder="Ex. 10000" value="${fv('sfr')}"><label class="f" for="swv">Numéro Wave / Orange Money de l'école</label><input class="input" id="swv" inputmode="tel" placeholder="Pour recevoir les paiements" value="${fv('swv')}">`;
+ }
+ return `<header class="top"><button class="iconbtn" aria-label="Retour" onclick="S.role=null;S._form={};save();render()">${I('back')}</button><div class="who"><div class="sub">Sunu Jàng</div><div class="hello">${t(r)}</div></div></header>
+ <main>${tabs}<div class="card">${form}<div class="spacer"></div><button class="btn block" onclick="keepForm();doLogin()">${mode==='new'&&r!=='student'?'Créer mon compte':t('start')}</button></div>
+ <div class="card" style="margin-top:12px;background:var(--mango-soft);border-color:#F3D9A6"><div class="row"><div class="grow"><b>Découvrir sans compte</b><div class="muted" style="color:var(--ink-2)">Entre dans l'app avec des données d'exemple.</div></div><button class="btn small mango" onclick="demoLogin()">Démo</button></div></div></main>`;
+}
+function emptyData(school){return {school,classes:[],eleves:[],notes:[],absences:[],paiements:[],mois:['Oct','Nov','Déc','Janv','Févr','Mars','Avr','Mai','Juin'],devoirs:[],comportement:[],messages:[],sondages:[],annonces:[],inscriptions:[],resultats:[],codes:['JANG-2026']}}
+function addEleve(o){const e={id:o.classe+'-'+uid(),points:0,sexe:'F',codeParent:'PAR-'+Math.floor(5000+Math.random()*4000),...o};S.data.eleves.push(e);S.data.mois.forEach(m=>S.data.paiements.push({eleve:e.id,mois:m,paye:false,ref:''}));return e}
+function newClass(nom,niveau,prof,fil){const cy=levelOf(niveau).cycle;const c={id:'c'+uid(),nom,niveau,prof,fil,code:nom.replace(/\s/g,'').toUpperCase().slice(0,8)+'-'+Math.floor(1000+Math.random()*9000),bareme:cy==='elem'?10:20,
+ matieres:subjectsFor(cy,fil).map(s=>[s,s==='Mathématiques'||s==='Français'||s==='Nahw'?3:isAr(s)?1:2])};S.data.classes.push(c);return c}
+function doLogin(){
+ const r=S.role,mode=r==='student'?'new':(S.loginMode||'new');const F=k=>((S._form||{})[k]||'').trim();
+ if(r==='student'){const p=F('pn');if(!p)return toast('Écris ton prénom pour continuer','x');S.student.prenom=p;const cc=F('cc').toUpperCase();
+  if(cc){const c=S.data.classes.find(x=>x.code===cc);if(!c)return toast('Code de classe introuvable. Vérifie avec ton enseignant.','x');S.student.classe=c.id;S.student.niveau=c.niveau;if(c.fil)S.student.fil=c.fil}
+  S.user={prenom:p,sub:'Élève · '+S.student.niveau+(S.student.fil==='fa'?' · franco-arabe':'')};}
+ else if(mode==='code'){const cd=F('cd').toUpperCase();if(!cd)return toast('Entre ton code pour continuer','x');
+  if(r==='parent'){const kids=S.data.eleves.filter(e=>e.codeParent===cd);if(!kids.length)return toast('Ce code parent n\'existe pas. Créez plutôt un compte.','x');S.user={prenom:'Parent',sub:'Parent · '+kids.map(k=>k.nom.split(' ')[0]).join(', '),kids:kids.map(k=>k.id),kid:kids[0].id,pending:[]}}
+  if(r==='teacher'){const c=S.data.classes.find(x=>x.code===cd);if(!c)return toast('Code de classe inconnu.','x');S.user={prenom:c.prof,sub:'Enseignant · '+S.data.school.nom,classes:S.data.classes.filter(x=>x.prof===c.prof).map(x=>x.id),cls:c.id}}
+  if(r==='director'){if(cd!==S.data.school.code)return toast('Code établissement inconnu.','x');S.user={prenom:S.data.school.directeur,sub:'Direction · '+S.data.school.nom}}}
+ else if(r==='parent'){const n=F('pnm');if(!n||!F('ptel'))return toast('Indiquez votre nom et votre téléphone','x');S.user={prenom:n.split(' ')[0],sub:'Parent',kids:[],kid:null,pending:[],tel:F('ptel')}}
+ else if(r==='teacher'){const n=F('tnm'),cl=F('tcl');if(!n||!cl)return toast('Indiquez votre nom et le nom de la classe','x');const c=newClass(cl,F('tlv')||'CM2',n,S._tmp.fil);S.user={prenom:n,sub:'Enseignant · classe '+c.nom,classes:[c.id],cls:c.id};setTimeout(()=>toast('Classe créée · code '+c.code),50)}
+ else {const n=F('snm'),d=F('sdr');if(!n||!d)return toast('Indiquez le nom de l\'école et du directeur','x');
+  const code=n.replace(/[^A-Za-zÀ-ÿ]/g,'').normalize('NFD').replace(/[̀-ͯ]/g,'').toUpperCase().slice(0,8)+Math.floor(10+Math.random()*89);
+  S.data=emptyData({code,nom:n,ville:F('svl'),directeur:d,tel:F('stl'),wave:F('swv')||'—',om:F('swv')||'—',frais:parseInt(F('sfr'))||0,periode:'semestre'});
+  S.user={prenom:d,sub:'Direction · '+n};setTimeout(()=>toast('École créée · code '+code),50)}
+ S._form={};S.tab='home';S.view=null;save();render();
+}
+function demoLogin(){
+ const r=S.role;if(S.data.school.code!=='PIONNIERS'||!S.data.classes.find(c=>c.id==='c3'))S.data=seedData();S.student.fil='classique';
+ if(r==='student'){S.student.prenom='Abdou';S.student.niveau='3e';S.student.classe='c2';S.user={prenom:'Abdou',sub:'Élève · 3e B · '+S.data.school.nom,eleve:'c2-0'}}
+ if(r==='parent'){S.user={prenom:'Famille Diallo',sub:'Parent de Abdou et Fatou',kids:['c2-0','c1-0'],kid:'c2-0',pending:[]}}
+ if(r==='teacher'){S.user={prenom:'M. Sarr',sub:'Enseignant · '+S.data.school.nom,classes:['c2','c1','c3'],cls:'c2'}}
+ if(r==='director'){S.user={prenom:'M. Diop',sub:'Direction · '+S.data.school.nom}}
+ S.tab='home';S.view=null;save();render();
+}
+
+// ---------- feuilles (sheets) et toasts ----------
+function sheet(html){closeSheet();const d=document.createElement('div');d.className='scrim';d.id='scrim';d.innerHTML=`<div class="sheet" role="dialog" aria-modal="true"><div class="grab"></div>${html}</div>`;d.addEventListener('click',e=>{if(e.target===d)closeSheet()});document.body.appendChild(d);const f=d.querySelector('input,textarea,button');f&&f.focus()}
+function closeSheet(){const d=$('#scrim');d&&d.remove()}
+let tT;function toast(m,ic='check'){const old=$('.toast');old&&old.remove();const d=document.createElement('div');d.className='toast';d.setAttribute('role','status');d.innerHTML=I(ic,18)+esc(m);document.body.appendChild(d);clearTimeout(tT);tT=setTimeout(()=>d.remove(),2600)}
+function speak(txt){try{const s=window.speechSynthesis;if(!s)return toast('Lecture vocale non disponible sur cet appareil','x');s.cancel();const clean=txt.replace(/<[^>]+>/g,' ');const ar=(clean.match(/[\u0600-\u06FF]/g)||[]).length,la=(clean.match(/[a-zA-Zéèà]/g)||[]).length;const u=new SpeechSynthesisUtterance(clean);u.lang=ar>la?'ar-SA':'fr-FR';u.rate=.95;s.speak(u);toast('Lecture en cours…','volume')}catch(e){toast('Lecture vocale non disponible','x')}}
+async function copyTxt(txt){try{await navigator.clipboard.writeText(txt);toast('Copié — colle-le dans WhatsApp')}catch(e){sheet(`<h3>Copier le texte</h3><p class="muted">Sélectionne et copie :</p><textarea class="input" style="min-height:220px">${esc(txt)}</textarea>`)}}
+
+function sheetSettings(){
+ sheet(`<h3>Réglages</h3><p class="muted">Adapte l'app à tes yeux et à ta connexion.</p>
+ <label class="f">Langue</label><div class="seg"><button class="${S.lang==='fr'?'on':''}" onclick="S.lang='fr';save();render();sheetSettings()">Français</button><button class="${S.lang==='wo'?'on':''}" onclick="S.lang='wo';save();render();sheetSettings()">Wolof</button></div>
+ <label class="f">Taille du texte</label><div class="seg">${[[.9,'A−'],[1,'A'],[1.15,'A+'],[1.3,'A++']].map(([v,l])=>`<button class="${S.fs==v?'on':''}" onclick="S.fs=${v};save();render();sheetSettings()">${l}</button>`).join('')}</div>
+ <label class="f">Contraste élevé</label><div class="seg"><button class="${!S.contrast?'on':''}" onclick="S.contrast=false;save();render();sheetSettings()">Normal</button><button class="${S.contrast?'on':''}" onclick="S.contrast=true;save();render();sheetSettings()">Élevé (plein soleil)</button></div>
+ <label class="f">Économie de données</label><div class="seg"><button class="${!S.saver?'on':''}" onclick="S.saver=false;save();sheetSettings()">Désactivée</button><button class="${S.saver?'on':''}" onclick="S.saver=true;save();sheetSettings()">Activée</button></div>
+ <p class="muted" style="margin-top:6px">Activée : pas d'images lourdes, cours enregistrés pour être lus sans internet.</p>
+ <div class="spacer"></div><div class="btns"><button class="btn ghost" onclick="closeSheet();S.user=null;S.view=null;save();render()">${I('logout')}Changer de compte</button><button class="btn danger" onclick="closeSheet();localStorage.removeItem('sunujang2');S=DEF();render()">Réinitialiser la démo</button></div>`);
+}
+function sheetNotifs(){
+ const items=S.role==='director'?[['Nouvelle inscription : '+S.data.inscriptions.filter(i=>i.statut==='en_attente').length+' en attente','Inscriptions'],['Paiements de novembre : relances à faire','Paiements']]
+ :S.role==='teacher'?[['Appel du jour à faire','Appel'],['Un parent vous a écrit','Messages']]
+ :S.role==='parent'?[['Nouvelle note de mathématiques','Notes'],['Paiement de novembre à régler','Paiements'],[S.data.annonces[0].titre,'École']]
+ :[['Nouveau devoir : '+(S.data.devoirs.find(d=>d.classe===S.student.classe)||{titre:'—'}).titre,'Devoirs'],['Défi du jour disponible','Quiz'],['Tu es à '+S.student.streak+' jours de suite !','Série']];
+ sheet(`<h3>Notifications</h3><div class="list" style="margin-top:12px">${items.map(([a,b])=>`<div class="item"><div class="av" style="background:var(--mango-soft);color:var(--warn)">${I('bell',18)}</div><div class="grow"><div class="t">${esc(a)}</div><div class="muted">${esc(b)}</div></div></div>`).join('')}</div>
+ <p class="muted" style="margin-top:12px">Les parents sans smartphone reçoivent aussi l'essentiel par SMS.</p>`);
+}
+
+// ============ ÉLÈVE ============
+function stCycle(){return levelOf(S.student.niveau).cycle}
+function stHome(){
+ const st=S.student,cy=stCycle(),lvl=levelOf(st.niveau);
+ const dv=S.data.devoirs.filter(d=>d.classe===st.classe).sort((a,b)=>a.limite.localeCompare(b.limite));
+ const pct=Math.min(100,Math.round(st.today/st.goal*100));
+ const subs=subjectsFor(cy,st.fil);const cont=(st.fil==='fa'?'ar|Hadith|0':Object.keys(LESSONS).find(k=>k.startsWith(cy+'|')))||'';const [,cs,ci]=cont.split('|');
+ const mates=st.classe?S.data.eleves.filter(e=>e.classe===st.classe).sort((a,b)=>b.points-a.points).slice(0,3):[];
+ return `<section class="hero">${WAX()}<div class="row" style="align-items:flex-start"><div class="grow"><h2>Objectif du jour : ${st.goal} activités</h2><p>${st.today>=st.goal?'Bravo, objectif atteint ! Continue sur ta lancée.':'Encore '+(st.goal-st.today)+' pour garder ta série.'}</p></div><div class="ring" style="--p:${pct}"><span>${st.today}/${st.goal}</span></div></div>
+ <div class="stats"><div class="stat"><b>${st.streak} j</b><span>Série</span></div><div class="stat"><b>${st.points}</b><span>Points</span></div><div class="stat"><b>${Object.keys(st.done).length}</b><span>Leçons lues</span></div></div>
+ <button class="btn" onclick="startQuiz('${cy}','__defi',3)">${I('flame',20)}Défi du jour · 3 questions</button></section>
+ ${cs?`<div class="sec-title">Reprendre</div><button class="card row" style="width:100%;text-align:left" onclick="open('lesson',{cy:'${cy}',s:'${cs}',i:${ci}})">${mono(cs)}<div class="grow"><div class="t" style="font-weight:700">${chTitle(CHAPTERS[chKey(cy,cs)][ci])}</div><div class="muted">${cs} · ${LESSONS[cont].dur} min de lecture</div><div class="bar"><i style="width:${st.done[cont]?100:35}%"></i></div></div>${I('chev',18)}</button>`:''}
+ ${dv.length?`<div class="sec-title">Mes devoirs <small>${S.data.classes.find(c=>c.id===st.classe).nom}</small></div><div class="list">${dv.slice(0,3).map(d=>`<div class="item">${mono(d.matiere,40)}<div class="grow"><div class="t">${esc(d.titre)}</div><div class="muted">Pour le ${dLabel(d.limite)}</div></div></div>`).join('')}</div>`:
+  `<div class="sec-title">Ma classe</div><div class="card"><b>Relie ton compte à ta classe</b><p class="muted">Avec le code de ton enseignant, tu verras tes devoirs et tes notes ici.</p><div class="spacer"></div><button class="btn small ghost" onclick="sheetJoin()">Entrer un code</button></div>`}
+ <div class="sec-title">Matières <small>${lvl.id} · ${CYCLE_NAME[cy]}</small></div>
+ <div class="grid2">${(st.fil==='fa'?subs.filter(isAr).slice(0,4):subs.slice(0,4)).map(s=>`<button class="tile" onclick="open('subject',{s:'${esc(s)}'})">${mono(s)}<div class="t">${subjLabel(s)}</div><span class="muted">${(CHAPTERS[chKey(cy,s)]||[]).length} chapitres</span></button>`).join('')}</div>
+ ${mates.length?`<div class="sec-title">Classement de la semaine</div><div class="list">${mates.map((m,i)=>`<div class="item"><div class="av" style="${i===0?'background:var(--mango);color:var(--ink)':''}">${i+1}</div><div class="grow"><div class="t">${esc(m.nom)}${m.id===S.user.eleve?' (toi)':''}</div></div><span class="badge">${m.points} pts</span></div>`).join('')}</div>`:''}`;
+}
+function sheetJoin(){sheet(`<h3>Rejoindre ma classe</h3><label class="f" for="jc">Code de classe</label><input class="input" id="jc" placeholder="Ex. 3EB-7390"><div class="spacer"></div><button class="btn block" onclick="const c=S.data.classes.find(x=>x.code===$('#jc').value.trim().toUpperCase());if(!c)return toast('Code introuvable','x');S.student.classe=c.id;S.student.niveau=c.niveau;S.user.sub='Élève · '+c.nom;save();closeSheet();render();toast('Bienvenue en '+c.nom)">Rejoindre</button>`)}
+function stCourses(){
+ const cy=stCycle();const sel=S.student.niveau;
+ return `<div class="sec-title" style="margin-top:6px">Cours <small>Programme officiel sénégalais</small></div>
+ <div class="chips">${LEVELS.map(l=>`<button class="chip ${sel===l.id?'on':''}" onclick="S.student.niveau='${l.id}';save();render()">${l.id}</button>`).join('')}</div>
+ <div class="spacer"></div><div class="tabs2" role="group" aria-label="Filière"><button class="${S.student.fil!=='fa'?'on':''}" onclick="S.student.fil='classique';save();render()">Classique</button><button class="${S.student.fil==='fa'?'on':''}" onclick="S.student.fil='fa';save();render()">Franco-arabe <span lang="ar" class="ar">عربي</span></button></div><div class="list">${subjectsFor(cy,S.student.fil).map(s=>{const n=(CHAPTERS[chKey(cy,s)]||[]).length;return `<button class="item" onclick="open('subject',{s:'${esc(s)}'})">${mono(s)}<div class="grow"><div class="t">${subjLabel(s)}</div><div class="muted">${isAr(s)?esc(AR_SUBJ[s][0])+' · ':''}${n} chapitres · quiz inclus</div></div>${I('chev',18)}</button>`}).join('')}</div>`;
+}
+VIEWS={};
+VIEWS.subject=v=>{
+ const cy=stCycle();const ch=CHAPTERS[chKey(cy,v.s)]||[];
+ return backbar(v.s,isAr(v.s)?AR_SUBJ[v.s][0]+' · '+AR_SUBJ[v.s][1]:S.student.niveau+' · '+CYCLE_NAME[cy])+`<div class="card row" style="background:var(--baobab);color:#fff;border:0">${mono(v.s)}<div class="grow"><b>Teste-toi en ${esc(v.s)}</b><div style="opacity:.85;font-size:.9rem">Quiz de 5 questions corrigées</div></div><button class="btn small mango" onclick="startQuiz('${cy}','${esc(v.s)}',5)">Go</button></div>
+ <div class="sec-title">Chapitres</div><div class="list">${ch.map((c,i)=>{const k=chKey(cy,v.s)+'|'+i;const has=!!LESSONS[k];return `<button class="item" onclick="open('lesson',{cy:'${cy}',s:'${esc(v.s)}',i:${i}})"><div class="av" style="${S.student.done[k]?'background:var(--ok);color:#fff':''}">${S.student.done[k]?I('check',18):i+1}</div><div class="grow"><div class="t">${chTitle(c)}</div><div class="muted">${has?LESSONS[k].dur+' min · leçon + exemples':'Résumé à venir'}</div></div>${I('chev',18)}</button>`}).join('')}</div>`;
+};
+VIEWS.lesson=v=>{
+ const k=chKey(v.cy,v.s)+'|'+v.i;const L=LESSONS[k];const title=CHAPTERS[chKey(v.cy,v.s)][v.i];
+ const body=L?L.html:`<p>Le contenu complet de ce chapitre est en cours de rédaction par l'équipe pédagogique.</p><div class="box">En attendant, entraîne-toi avec le quiz de ${esc(v.s)} : il couvre les notions principales de ton niveau.</div>`;
+ return backbar(title.includes(' · ')?title.split(' · ')[1]:title,title.includes(' · ')?title.split(' · ')[0]:v.s)+`<div class="row" style="margin:4px 0 6px"><button class="speak" onclick="speak(document.querySelector('.lesson').innerText)">${I('volume')}${t('listen')}</button><span class="muted">${L?L.dur+' min':''}</span></div>
+ <article class="card lesson">${body}</article><div class="spacer"></div>
+ <div class="btns"><button class="btn" onclick="S.student.done['${k}']=1;S.student.points+=10;S.student.today++;save();toast('Leçon terminée : +10 points');back()">${I('check',20)}J'ai compris</button><button class="btn ghost" onclick="startQuiz('${v.cy}','${esc(v.s)}',5)">Faire le quiz</button></div>`;
+};
+function stQuizHome(){
+ const cy=stCycle();
+ const hist=S.data.resultats.slice(-5).reverse();
+ return `<section class="hero">${WAX()}<h2>Entraîne-toi en 2 minutes</h2><p>Questions corrigées et expliquées, adaptées au niveau ${S.student.niveau}.</p><button class="btn" onclick="startQuiz('${cy}','__mix',8)">${I('quiz',20)}Quiz mélangé</button></section>
+ <div class="sec-title">Par matière</div><div class="grid2">${subjectsFor(cy,S.student.fil).map(s=>`<button class="tile" onclick="startQuiz('${cy}','${esc(s)}',5)">${mono(s,38)}<div class="t">${subjLabel(s)}</div></button>`).join('')}</div>
+ <div class="sec-title">Mes derniers résultats</div>${hist.length?`<div class="list">${hist.map(r=>`<div class="item">${mono(r.matiere==='Défi du jour'||r.matiere==='Mélangé'?'Mathématiques':r.matiere,38)}<div class="grow"><div class="t">${esc(r.matiere)}</div><div class="muted">${esc(r.date)}</div></div><span class="badge ${r.pct>=70?'ok':r.pct>=50?'warn':'bad'}">${r.score}/${r.total}</span></div>`).join('')}</div>`:`<div class="card empty">Aucun quiz pour l'instant. Lance ton premier quiz ci-dessus.</div>`}`;
+}
+function startQuiz(cy,subj,n){
+ let pool;
+ if(subj==='__defi'||subj==='__mix'){pool=subjectsFor(cy,S.student.fil).flatMap(s=>bankFor(cy,s).map(q=>[...q,s]))}else pool=bankFor(cy,subj).map(q=>[...q,subj]);
+ const uniq=[...new Map(pool.map(q=>[q[0],q])).values()];
+ const qs=uniq.sort(()=>Math.random()-.5).slice(0,n).map(q=>{const order=q[1].map((_,i)=>i).sort(()=>Math.random()-.5);return {q:q[0],c:order.map(i=>q[1][i]),a:order.indexOf(q[2]),e:q[3],s:q[4]}});
+ S.view={name:'quiz',fn:VIEWS.quiz,hideNav:true,qs,i:0,score:0,picked:null,label:subj==='__defi'?'Défi du jour':subj==='__mix'?'Mélangé':subj};
+ render();scrollTo(0,0);
+}
+VIEWS.quiz=v=>{
+ if(v.i>=v.qs.length){
+  const pct=Math.round(v.score/v.qs.length*100);
+  return `<header class="top"><div class="who"><div class="hello">Résultat</div><div class="sub">${esc(v.label)}</div></div><button class="iconbtn" aria-label="Fermer" onclick="back()">${I('x')}</button></header>
+  <div class="card" style="text-align:center;padding:28px 16px"><div class="score">${v.score}/${v.qs.length}</div><p style="font-size:1.15rem;margin-top:8px;font-weight:700">${pct>=80?'Excellent travail !':pct>=50?'Bien, continue comme ça.':'Courage, relis la leçon et réessaie.'}</p><p class="muted">+${v.score*10} points gagnés</p></div>
+  <div class="sec-title">Correction</div><div class="list">${v.qs.map(q=>`<div class="item"><div class="av" style="background:${q.ok?'var(--ok)':'var(--bad)'};color:#fff">${I(q.ok?'check':'x',18)}</div><div class="grow"><div class="t" dir="auto">${esc(q.q)}</div><div class="muted" dir="auto">Réponse : ${esc(q.c[q.a])}</div></div></div>`).join('')}</div>
+  <div class="spacer"></div><div class="btns"><button class="btn" onclick="back()">Terminer</button><button class="btn ghost" onclick="copyTxt('Sunu Jàng · '+'${esc(v.label)}'+' : j\\'ai eu ${v.score}/${v.qs.length} ! Essaie de me battre 💪')">Partager</button></div>`;
+ }
+ const q=v.qs[v.i];const p=v.picked;
+ return `<header class="top"><button class="iconbtn" aria-label="Quitter le quiz" onclick="back()">${I('x')}</button><div class="qprog grow" role="progressbar" aria-valuenow="${v.i+1}" aria-valuemax="${v.qs.length}"><i style="width:${(v.i+(p!=null?1:0))/v.qs.length*100}%"></i></div><span class="badge">${v.i+1}/${v.qs.length}</span></header>
+ <main style="padding-bottom:30px"><div class="row">${mono(q.s,32)}<span class="muted">${esc(q.s)}</span><button class="speak" style="margin-left:auto" onclick="speak(${esc(JSON.stringify(q.q+'. '+q.c.join('. ')))})" aria-label="Écouter la question">${I('volume')}</button></div>
+ <h2 class="q" dir="auto">${esc(q.q)}</h2>
+ ${q.c.map((c,i)=>`<button class="opt ${p!=null?(i===q.a?'good':i===p?'wrong':''):''}" ${p!=null?'disabled':''} onclick="answer(${i})"><span class="k">${'ABCD'[i]}</span><span dir="auto" style="flex:1" ${/[\u0600-\u06FF]/.test(c)?'class="ar" lang="ar"':''}>${esc(c)}</span></button>`).join('')}
+ ${p!=null?`<div class="explain ${p===q.a?'good':'wrong'}"><b>${p===q.a?'Bonne réponse !':'Pas tout à fait.'}</b> ${esc(q.e)}</div><div class="spacer"></div><button class="btn block" onclick="nextQ()">${v.i+1<v.qs.length?'Question suivante':'Voir mon résultat'}</button>`:''}
+ </main>`;
+};
+function answer(i){const v=S.view;v.picked=i;const q=v.qs[v.i];q.ok=i===q.a;if(q.ok)v.score++;render()}
+function nextQ(){const v=S.view;v.i++;v.picked=null;if(v.i>=v.qs.length){S.student.points+=v.score*10;S.student.today++;S.data.resultats.push({matiere:v.label,score:v.score,total:v.qs.length,pct:Math.round(v.score/v.qs.length*100),date:new Date().toLocaleDateString('fr-FR')});if(S.user.eleve){const e=S.data.eleves.find(x=>x.id===S.user.eleve);e&&(e.points+=v.score*10)}save()}render();scrollTo(0,0)}
+function stExams(){
+ const lvl=levelOf(S.student.niveau);const prem=S.student.premium;
+ const order=lvl.exam?[lvl.exam,...Object.keys(EXAMS).filter(x=>x!==lvl.exam)]:Object.keys(EXAMS);
+ return `<div class="sec-title" style="margin-top:6px">Examens <small>Annales et sujets corrigés</small></div>
+ ${!prem?`<div class="card" style="background:var(--bissap);color:#fff;border:0"><div class="row"><div class="grow"><b style="font-family:var(--display);font-size:1.2rem">Pack Examens</b><p style="opacity:.9;font-size:.92rem;margin-top:4px">Sujets corrigés pas à pas, examens blancs chronométrés, fiches de révision.</p></div>${I('lock',30)}</div><div class="spacer"></div><div class="btns"><button class="btn mango small" onclick="sheetUnlock()">J'ai un code</button><button class="btn small" style="background:rgba(255,255,255,.15)" onclick="sheetBuy()">Acheter · 2 000 F</button></div></div>`:
+  `<div class="card row" style="background:var(--baobab-soft);border-color:#BFDCCD">${I('check')}<div class="grow"><b>Pack Examens activé</b><div class="muted">Tous les sujets sont débloqués.</div></div></div>`}
+ ${order.map(x=>{const E=EXAMS[x];return `<div class="sec-title">${E.name} <small>${E.full}</small></div><div class="list">${[2025,2024,2023,2022].map((y,j)=>`<button class="item" onclick="${prem||j===0?`open('exam',{x:'${x}',y:${y}})`:`sheetUnlock()`}"><div class="mono" style="background:var(--ink)">${String(y).slice(2)}</div><div class="grow"><div class="t">${E.name} ${y}</div><div class="muted">${E.subjects.length} épreuves${j===0?' · gratuit':''}</div></div>${prem||j===0?I('chev',18):`<span class="badge lock">${I('lock',14)}</span>`}</button>`).join('')}</div>`}).join('')}`;
+}
+function sheetUnlock(){sheet(`<h3>Débloquer le Pack Examens</h3><p class="muted">Entre le code reçu de ton école ou après ton paiement.</p><label class="f" for="uc">Code d'activation</label><input class="input" id="uc" placeholder="Ex. JANG-2026" autocapitalize="characters"><p class="muted" style="margin-top:6px">Démo : JANG-2026</p><div class="spacer"></div><button class="btn block" onclick="const c=$('#uc').value.trim().toUpperCase();if(!S.data.codes.includes(c))return toast('Code invalide ou déjà utilisé','x');S.data.codes=S.data.codes.filter(x=>x!==c);S.student.premium=true;save();closeSheet();render();toast('Pack Examens activé')">Activer</button>`)}
+function sheetBuy(){sheet(`<h3>Payer avec Wave ou Orange Money</h3><p class="muted">2 000 F CFA pour toute l'année scolaire.</p>
+ <div class="list" style="margin-top:12px"><div class="item"><div class="mono" style="background:#1DC3F0">W</div><div class="grow"><div class="t">Wave</div><div class="muted">Envoie 2 000 F au 77 123 45 67</div></div></div><div class="item"><div class="mono" style="background:#FF7900">OM</div><div class="grow"><div class="t">Orange Money</div><div class="muted">Envoie 2 000 F au 78 123 45 67</div></div></div></div>
+ <label class="f" for="rf">Référence de la transaction</label><input class="input" id="rf" placeholder="Ex. WV-88213"><div class="spacer"></div><button class="btn block" onclick="if(!$('#rf').value.trim())return toast('Ajoute la référence du paiement','x');closeSheet();toast('Paiement envoyé pour vérification. Tu recevras ton code par SMS.')">Envoyer la référence</button>`)}
+VIEWS.exam=v=>{const E=EXAMS[v.x];return backbar(E.name+' '+v.y,E.full)+`<div class="list">${E.subjects.map(s=>`<button class="item" onclick="startQuiz('${v.x==='CFEE'?'elem':v.x==='BFEM'?'moyen':'lycee'}','${esc(s)}',6)">${mono(s)}<div class="grow"><div class="t">${esc(s)}</div><div class="muted">Sujet + corrigé détaillé · mode chrono</div></div>${I('chev',18)}</button>`).join('')}</div><p class="muted" style="margin-top:12px">Dans cette démo, chaque épreuve ouvre un quiz d'entraînement de la matière.</p>`};
+function stMe(){
+ const st=S.student;const hist=S.data.resultats;const avg=hist.length?Math.round(hist.reduce((a,b)=>a+b.pct,0)/hist.length):null;
+ const b=S.user.eleve?bulletin(S.user.eleve):null;
+ return `<div class="card row" style="margin-top:6px"><div class="av" style="width:56px;height:56px;font-size:1.2rem">${initials(st.prenom||'É')}</div><div class="grow"><b style="font-family:var(--display);font-size:1.25rem">${esc(st.prenom)}</b><div class="muted">${esc(S.user.sub)}</div></div></div>
+ <div class="kpis" style="margin-top:10px"><div class="kpi"><span>Points</span><b>${st.points}</b></div><div class="kpi"><span>Réussite aux quiz</span><b>${avg==null?'—':avg+' %'}</b></div></div>
+ ${b?`<div class="sec-title">Mes notes <small>Semestre 1</small></div><div class="card"><div class="row"><div class="grow"><span class="muted">Moyenne générale</span><div style="font-family:var(--display);font-size:2rem;font-weight:800">${fmt(b.moy)}<span class="muted" style="font-size:1rem">/${b.c.bareme}</span></div></div><span class="badge ok">${rangTxt(b.rang)} / ${b.effectif}</span></div></div>
+ <div class="list" style="margin-top:10px">${b.lignes.map(l=>`<div class="item">${mono(l.m,38)}<div class="grow"><div class="t">${esc(l.m)}</div><div class="muted">Coef. ${l.coef}</div></div><b>${fmt(l.moy)}</b></div>`).join('')}</div>`:''}
+ <div class="sec-title">Mes badges</div><div class="grid2">${[['flame','Série de '+st.streak+' jours',st.streak>=3],['star','100 points',st.points>=100],['award','Premier quiz parfait',hist.some(h=>h.pct===100)],['book','5 leçons lues',Object.keys(st.done).length>=5]].map(([ic,l,ok])=>`<div class="tile" style="${ok?'':'opacity:.5'}"><div class="mono" style="background:${ok?'var(--mango)':'var(--line)'};color:var(--ink)">${I(ic)}</div><div class="t">${l}</div><span class="muted">${ok?'Obtenu':'À débloquer'}</span></div>`).join('')}</div>`;
+}
+
+// ============ PARENT ============
+function kid(){return S.data.eleves.find(e=>e.id===S.user.kid)}
+function kidSwitch(){
+ return S.user.kids.length>1?`<div class="chips" style="margin-top:4px">${S.user.kids.map(id=>{const e=S.data.eleves.find(x=>x.id===id);const c=S.data.classes.find(x=>x.id===e.classe);return `<button class="chip ${S.user.kid===id?'on':''}" onclick="S.user.kid='${id}';save();render()">${esc(e.nom.split(' ')[0])} · ${c.nom}</button>`}).join('')}<button class="chip" onclick="sheetAddKid()">+ Ajouter</button></div><div class="spacer"></div>`:`<div class="chips" style="margin-top:4px"><button class="chip on">${esc(kid().nom.split(' ')[0])}</button><button class="chip" onclick="sheetAddKid()">+ Ajouter un enfant</button></div><div class="spacer"></div>`;
+}
+function paHome(){
+ const e=kid();const b=bulletin(e.id);const a=absCount(e.id);const dv=S.data.devoirs.filter(d=>d.classe===e.classe).sort((x,y)=>x.limite.localeCompare(y.limite));
+ const unpaid=S.data.paiements.filter(p=>p.eleve===e.id&&!p.paye);const dueNow=unpaid.filter(p=>['Oct','Nov'].includes(p.mois));
+ const lastNotes=S.data.notes.filter(n=>n.eleve===e.id).sort((x,y)=>y.date.localeCompare(x.date)).slice(0,3);
+ const summary=`${e.nom.split(' ')[0]} a ${fmt(b.moy)} sur ${b.c.bareme} de moyenne, et il est classé ${rangTxt(b.rang)} sur ${b.effectif}. ${a.abs} absence${a.abs>1?'s':''} et ${a.ret} retard${a.ret>1?'s':''} ces deux dernières semaines. ${dv.length} devoirs à faire.${dueNow.length?' Paiement en attente : '+dueNow.map(p=>p.mois).join(', ')+'.':''}`;
+ const sd=S.data.sondages.find(s=>s.actif);
+ return kidSwitch()+`<section class="hero">${WAX()}<div class="row" style="align-items:flex-start"><div class="grow"><p style="margin:0;opacity:.85">${esc(e.nom)} · ${b.c.nom}</p><h2 style="font-size:2.6rem;margin-top:2px">${fmt(b.moy)}<span style="font-size:1.1rem;opacity:.8">/${b.c.bareme}</span></h2><p style="margin-top:0">${b.mention} · ${rangTxt(b.rang)} sur ${b.effectif}</p></div></div>
+ <div class="stats"><div class="stat"><b>${a.abs}</b><span>Absences</span></div><div class="stat"><b>${a.ret}</b><span>Retards</span></div><div class="stat"><b>${dv.length}</b><span>Devoirs</span></div></div>
+ <button class="btn" onclick="speak(${esc(JSON.stringify(summary))})">${I('volume',20)}Écouter le résumé</button></section>
+ ${dueNow.length?`<div class="card row" style="margin-top:12px;border-color:var(--mango);background:var(--mango-soft)">${I('wallet')}<div class="grow"><b>Mensualité de ${dueNow.map(p=>p.mois).join(', ')} à régler</b><div class="muted" style="color:var(--ink-2)">${fcfa(S.data.school.frais*dueNow.length)}</div></div><button class="btn small" onclick="go('pay')">Payer</button></div>`:''}
+ <div class="sec-title">Dernières notes <button class="link" onclick="go('notes')">Tout voir</button></div><div class="list">${lastNotes.map(n=>`<div class="item">${mono(n.matiere,38)}<div class="grow"><div class="t">${esc(n.matiere)}</div><div class="muted">${n.type==='compo'?'Composition':'Devoir'} · ${dLabel(n.date)}</div></div><b style="color:${n.note/b.c.bareme>=.5?'var(--ok)':'var(--bad)'}">${fmt(n.note,1)}/${b.c.bareme}</b></div>`).join('')}</div>
+ ${sd?`<div class="sec-title">Question de l'école</div><div class="card"><b>${esc(sd.question)}</b><div class="spacer"></div>${sd.maReponse?`<span class="badge ok">Vous avez répondu : ${sd.maReponse.replace('_',' ')}</span>`:`<div class="btns">${[['oui','Oui'],['non','Non'],['peut_etre','Peut-être']].map(([k,l])=>`<button class="btn small ${k==='oui'?'':'ghost'}" onclick="vote('${sd.id}','${k}')">${l}</button>`).join('')}</div>`}</div>`:''}`;
+}
+function vote(id,k){const s=S.data.sondages.find(x=>x.id===id);s.reponses[k]++;s.maReponse=k;save();render();toast('Réponse envoyée à l\'école')}
+function paNotes(){
+ const e=kid();const b=bulletin(e.id);
+ return kidSwitch()+`<div class="sec-title" style="margin-top:6px">Bulletin du semestre 1 <small>${b.c.nom}</small></div>
+ <div class="card"><table class="table"><thead><tr><th>Matière</th><th style="text-align:right">Coef</th><th style="text-align:right">Devoirs</th><th style="text-align:right">Compo</th><th style="text-align:right">Moy.</th></tr></thead><tbody>
+ ${b.lignes.map(l=>`<tr><td>${esc(l.m)}</td><td class="n">${l.coef}</td><td class="n">${fmt(l.md)}</td><td class="n">${fmt(l.mc)}</td><td class="n" style="color:${l.moy!=null&&l.moy/b.c.bareme<.5?'var(--bad)':'inherit'}">${fmt(l.moy)}</td></tr>`).join('')}
+ </tbody></table>
+ <div class="row" style="margin-top:14px"><div class="grow"><span class="muted">Moyenne générale</span><div style="font-family:var(--display);font-size:1.8rem;font-weight:800">${fmt(b.moy)}/${b.c.bareme}</div></div><div style="text-align:right"><span class="badge ok">${rangTxt(b.rang)} / ${b.effectif}</span><div class="muted" style="margin-top:6px">Moy. classe : ${fmt(b.classMoy)}</div></div></div>
+ <p style="margin-top:8px"><b>Appréciation :</b> ${b.mention}</p></div>
+ <p class="muted" style="margin-top:8px">Moyenne d'une matière = (moyenne des devoirs + 2 × composition) ÷ 3.</p>
+ <div class="spacer"></div><div class="btns"><button class="btn" onclick="copyTxt(bulletinText('${e.id}'))">${I('copy',20)}Copier pour WhatsApp</button><button class="btn ghost" onclick="speak(bulletinText('${e.id}'))">${I('volume',20)}Écouter</button></div>`;
+}
+function bulletinText(id){const b=bulletin(id);return `📘 Bulletin S1 — ${b.e.nom} (${b.c.nom})\n${S.data.school.nom}\n\n`+b.lignes.map(l=>`• ${l.m} (coef ${l.coef}) : ${fmt(l.moy)}`).join('\n')+`\n\nMoyenne générale : ${fmt(b.moy)}/${b.c.bareme}\nRang : ${rangTxt(b.rang)} sur ${b.effectif}\nAppréciation : ${b.mention}`}
+function paSchool(){
+ const e=kid();const dv=S.data.devoirs.filter(d=>d.classe===e.classe).sort((a,b)=>a.limite.localeCompare(b.limite));
+ const ab=S.data.absences.filter(a=>a.eleve===e.id&&a.statut!=='present');const cp=S.data.comportement.filter(c=>c.eleve===e.id);
+ return kidSwitch()+`<div class="sec-title" style="margin-top:6px">Devoirs à la maison</div><div class="list">${dv.map(d=>`<div class="item">${mono(d.matiere,40)}<div class="grow"><div class="t">${esc(d.titre)}</div><div class="muted">${esc(d.matiere)} · pour le ${dLabel(d.limite)}</div></div></div>`).join('')||'<div class="empty">Aucun devoir.</div>'}</div>
+ <div class="sec-title">Absences et retards</div><div class="list">${ab.map(a=>`<div class="item"><div class="av" style="background:${a.statut==='absent'?'#F8E0DD':'var(--mango-soft)'};color:${a.statut==='absent'?'var(--bad)':'var(--warn)'}">${I('cal',18)}</div><div class="grow"><div class="t">${dLabel(a.date)}</div></div><span class="badge ${a.statut==='absent'?'bad':'warn'}">${a.statut==='absent'?'Absent':'En retard'}</span></div>`).join('')||'<div class="empty">Aucune absence. Bravo !</div>'}</div>
+ <div class="sec-title">Comportement</div><div class="list">${cp.map(c=>`<div class="item"><div class="av" style="background:${c.type==='positif'?'#DDF2E5':'#F8E0DD'};color:${c.type==='positif'?'var(--ok)':'var(--bad)'}">${I(c.type==='positif'?'star':'x',18)}</div><div class="grow"><div class="t">${esc(c.texte)}</div><div class="muted">${dLabel(c.date)}</div></div></div>`).join('')||'<div class="empty">Rien à signaler.</div>'}</div>
+ <div class="sec-title">Annonces de l'école</div><div class="stack">${S.data.annonces.map(a=>`<div class="card"><div class="row">${I('megaphone')}<b class="grow">${esc(a.titre)}</b></div><p style="margin-top:6px">${esc(a.txt)}</p><p class="muted" style="margin-top:4px">${dLabel(a.date)}</p></div>`).join('')}</div>`;
+}
+function paPay(){
+ const e=kid();const ps=S.data.paiements.filter(p=>p.eleve===e.id);const sc=S.data.school;const paid=ps.filter(p=>p.paye).length;
+ return kidSwitch()+`<div class="card" style="margin-top:6px"><span class="muted">Scolarité ${esc(e.nom.split(' ')[0])} · ${fcfa(sc.frais)}/mois</span><div style="font-family:var(--display);font-size:1.8rem;font-weight:800">${paid}/${ps.length} mois payés</div><div class="bar"><i style="width:${paid/ps.length*100}%"></i></div></div>
+ <div class="sec-title">Mois de l'année</div><div class="pay">${ps.map(p=>{const due=!p.paye&&['Oct','Nov'].includes(p.mois);return `<button class="month ${p.paye?'paid':due?'due':''}" ${p.paye?'disabled':''} onclick="sheetPay('${e.id}','${p.mois}')"><b>${p.mois}</b><span class="muted" style="font-size:.78rem">${p.paye?'Payé':due?'À payer':'À venir'}</span></button>`}).join('')}</div>
+ <div class="sec-title">Payer facilement</div><div class="list"><div class="item"><div class="mono" style="background:#1DC3F0">W</div><div class="grow"><div class="t">Wave</div><div class="muted">${sc.wave}</div></div></div><div class="item"><div class="mono" style="background:#FF7900">OM</div><div class="grow"><div class="t">Orange Money</div><div class="muted">${sc.om}</div></div></div></div>
+ <p class="muted" style="margin-top:10px">Après le paiement, entrez la référence : l'école confirme et vous recevez un reçu dans l'app.</p>`;
+}
+function sheetPay(id,m){sheet(`<h3>Payer ${m}</h3><p class="muted">${fcfa(S.data.school.frais)} · envoyez par Wave (${S.data.school.wave}) ou Orange Money (${S.data.school.om}).</p>
+ <label class="f" for="rf">Référence de la transaction</label><input class="input" id="rf" placeholder="Ex. WV-88213"><div class="spacer"></div>
+ <button class="btn block" onclick="const r=$('#rf').value.trim();if(!r)return toast('Ajoutez la référence du paiement','x');const p=S.data.paiements.find(x=>x.eleve==='${id}'&&x.mois==='${m}');p.paye=true;p.ref=r;save();closeSheet();render();toast('Paiement de ${m} enregistré')">Confirmer le paiement</button>`)}
+function paMsgs(){
+ const ths=S.data.messages.filter(m=>S.user.kids.includes(m.eleve));
+ return `<div class="sec-title" style="margin-top:6px">Messages <small>avec les enseignants</small></div><div class="list">${ths.map(th=>{const e=S.data.eleves.find(x=>x.id===th.eleve);const last=th.msgs[th.msgs.length-1];return `<button class="item" onclick="open('thread',{id:'${th.id}',hideNav:true})"><div class="av">${initials(th.avec.replace(/^(M\.|Mme) /,''))}</div><div class="grow"><div class="t">${esc(th.avec)}</div><div class="muted" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(e.nom.split(' ')[0])} · ${esc(last.txt)}</div></div><span class="muted">${last.d}</span></button>`}).join('')}</div>`;
+}
+VIEWS.thread=v=>{const th=S.data.messages.find(m=>m.id===v.id);const e=S.data.eleves.find(x=>x.id===th.eleve);const me=S.role==='teacher'?'them':'me';
+ return backbar(S.role==='teacher'?'Parent de '+e.nom:th.avec,'À propos de '+e.nom)+`<div style="min-height:50vh">${th.msgs.map(m=>`<div class="bubble ${m.de===me?'me':'them'}">${esc(m.txt)}<small>${m.d}</small></div>`).join('')}</div>
+ <div class="row" style="position:sticky;bottom:12px;margin-top:16px"><input class="input grow" id="mt" placeholder="Écrire un message…" onkeydown="if(event.key==='Enter')sendMsg('${th.id}')"><button class="btn" aria-label="Envoyer" onclick="sendMsg('${th.id}')" style="width:52px;padding:0">${I('send',20)}</button></div>`};
+function sendMsg(id){const v=$('#mt').value.trim();if(!v)return;const th=S.data.messages.find(m=>m.id===id);th.msgs.push({de:S.role==='teacher'?'them':'me',txt:v,d:"aujourd'hui"});save();render();const m=$('#mt');m&&m.focus()}
+
+// ============ ENSEIGNANT ============
+function cls(){return S.data.classes.find(c=>c.id===S.user.cls)}
+function clsSwitch(){return `<div class="chips" style="margin-top:4px">${S.user.classes.map(id=>{const c=S.data.classes.find(x=>x.id===id);return `<button class="chip ${S.user.cls===id?'on':''}" onclick="S.user.cls='${id}';save();render()">${c.nom}</button>`}).join('')}</div><div class="spacer"></div>`}
+function teHome(){
+ const c=cls();const el=S.data.eleves.filter(e=>e.classe===c.id);
+ if(!el.length)return clsSwitch()+`<section class="hero">${WAX()}<p style="margin:0;opacity:.85">${esc(c.nom)} · ${c.niveau}${c.fil==='fa'?' · franco-arabe':''}</p><h2>Ajoutez vos élèves</h2><p>Puis donnez le code de classe <b>${c.code}</b> aux élèves et le code parent à chaque famille.</p><button class="btn" onclick="sheetAddEleve()">${I('plus',20)}Ajouter un élève</button></section><div class="spacer"></div><div class="card row"><div class="grow"><div style="font-family:var(--display);font-size:1.5rem;font-weight:800">${c.code}</div><div class="muted">Code de la classe</div></div><button class="btn small ghost" onclick="copyTxt('Rejoins la classe ${esc(c.nom)} sur Sunu Jàng avec le code ${c.code}')">${I('copy',18)}Copier</button></div><div class="spacer"></div><button class="btn ghost block" onclick="sheetNewClass()">${I('plus',20)}Créer une autre classe</button>`;const d=S.data.absences.filter(a=>a.classe===c.id&&a.date===lastDay());const pres=d.filter(a=>a.statut!=='absent').length;
+ const moys=el.map(e=>moyGen(e.id)).filter(x=>x!=null);const cm=moys.reduce((a,b)=>a+b,0)/moys.length;
+ const weak=el.map(e=>({e,m:moyGen(e.id)})).filter(x=>x.m!=null&&x.m/c.bareme<.5).sort((a,b)=>a.m-b.m);
+ const done=S.data.absences.some(a=>a.classe===c.id&&a.date===todayISO());
+ return clsSwitch()+`<section class="hero">${WAX()}<p style="margin:0;opacity:.85">${c.nom} · ${el.length} élèves</p><h2>${done?'Appel fait. Bonne journée !':'L\'appel du jour n\'est pas encore fait'}</h2>
+ <div class="stats"><div class="stat"><b>${fmt(cm)}</b><span>Moy. classe</span></div><div class="stat"><b>${Math.round(pres/(d.length||1)*100)} %</b><span>Présence</span></div><div class="stat"><b>${S.data.devoirs.filter(x=>x.classe===c.id).length}</b><span>Devoirs</span></div></div>
+ <button class="btn" onclick="go('call')">${I('check',20)}${done?'Revoir l\'appel':'Faire l\'appel'}</button></section>
+ <div class="sec-title">Actions rapides</div><div class="grid2">
+ ${[['clip','Saisir des notes',"go('notes')"],['book','Donner un devoir',"sheetDevoir()"],['star','Noter le comportement',"open('behaviour')"],['msg','Messages parents',"open('teMsgs')"]].map(([ic,l,f])=>`<button class="tile" onclick="${f}"><div class="mono" style="background:var(--baobab-soft);color:var(--baobab)">${I(ic)}</div><div class="t">${l}</div></button>`).join('')}</div>
+ ${weak.length?`<div class="sec-title">Élèves à accompagner <small>moyenne sous ${c.bareme/2}</small></div><div class="list">${weak.slice(0,4).map(x=>`<div class="item"><div class="av" style="background:#F8E0DD;color:var(--bad)">${initials(x.e.nom)}</div><div class="grow"><div class="t">${esc(x.e.nom)}</div></div><b style="color:var(--bad)">${fmt(x.m)}</b></div>`).join('')}</div>`:''}`;
+}
+function lastDay(){const ds=[...new Set(S.data.absences.map(a=>a.date))].sort();return ds[ds.length-1]}
+function teCall(){
+ const c=cls();const el=S.data.eleves.filter(e=>e.classe===c.id);const day=todayISO();
+ if(!S._call||S._call.cls!==c.id){const ex=S.data.absences.filter(a=>a.classe===c.id&&a.date===day);S._call={cls:c.id,map:Object.fromEntries(el.map(e=>[e.id,(ex.find(a=>a.eleve===e.id)||{}).statut||'present']))}}
+ const m=S._call.map;const n=Object.values(m);
+ return clsSwitch()+`<div class="row"><div class="grow"><div class="sec-title" style="margin:0">Appel · ${dLabel(day)}</div><div class="muted">P = présent · A = absent · R = retard</div></div></div>
+ <div class="row" style="gap:8px;margin:10px 0"><span class="badge ok">${n.filter(x=>x==='present').length} présents</span><span class="badge bad">${n.filter(x=>x==='absent').length} absents</span><span class="badge warn">${n.filter(x=>x==='retard').length} retards</span></div>
+ <div class="list">${el.map(e=>`<div class="roll"><div class="av">${initials(e.nom)}</div><div class="grow"><b>${esc(e.nom)}</b></div><div class="tri" role="group" aria-label="Statut de ${esc(e.nom)}">${[['p','present','P'],['a','absent','A'],['r','retard','R']].map(([k,v,l])=>`<button class="${k} ${m[e.id]===v?'on':''}" aria-pressed="${m[e.id]===v}" onclick="S._call.map['${e.id}']='${v}';render()">${l}</button>`).join('')}</div></div>`).join('')}</div>
+ <div class="spacer"></div><button class="btn block" onclick="saveCall()">${I('check',20)}Enregistrer l'appel</button><p class="muted" style="margin-top:8px;text-align:center">Les parents des absents sont prévenus automatiquement.</p>`;
+}
+function saveCall(){const c=cls();const day=todayISO();S.data.absences=S.data.absences.filter(a=>!(a.classe===c.id&&a.date===day));for(const [id,st] of Object.entries(S._call.map))S.data.absences.push({eleve:id,classe:c.id,date:day,statut:st});const nAbs=Object.values(S._call.map).filter(x=>x==='absent').length;save();toast('Appel enregistré'+(nAbs?' · '+nAbs+' parent'+(nAbs>1?'s':'')+' prévenu'+(nAbs>1?'s':''):''));go('home')}
+function teNotes(){
+ const c=cls();const el=S.data.eleves.filter(e=>e.classe===c.id);
+ S._n=S._n&&S._n.cls===c.id?S._n:{cls:c.id,mat:c.matieres[0][0],type:'devoir',vals:{}};const n=S._n;
+ return clsSwitch()+`<div class="sec-title" style="margin-top:0">Saisie des notes <small>sur ${c.bareme}</small></div>
+ <label class="f" for="nm">Matière</label><select class="input" id="nm" onchange="S._n.mat=this.value;S._n.vals={};render()">${c.matieres.map(([m])=>`<option ${m===n.mat?'selected':''}>${esc(m)}</option>`).join('')}</select>
+ <label class="f">Type</label><div class="seg"><button class="${n.type==='devoir'?'on':''}" onclick="S._n.type='devoir';render()">Devoir</button><button class="${n.type==='compo'?'on':''}" onclick="S._n.type='compo';render()">Composition</button></div>
+ <div class="spacer"></div><div class="list">${el.map((e,i)=>`<div class="roll"><div class="av">${initials(e.nom)}</div><div class="grow"><b>${esc(e.nom)}</b><div class="muted">Moy. actuelle : ${fmt(moyMatiere(e.id,n.mat).moy)}</div></div><input class="noteIn" inputmode="decimal" aria-label="Note de ${esc(e.nom)}" placeholder="—" value="${n.vals[e.id]??''}" oninput="S._n.vals['${e.id}']=this.value" onkeydown="if(event.key==='Enter'){const x=document.querySelectorAll('.noteIn')[${i+1}];x&&x.focus()}"></div>`).join('')}</div>
+ <div class="spacer"></div><button class="btn block" onclick="saveNotes()">${I('check',20)}Enregistrer les notes</button>`;
+}
+function saveNotes(){const c=cls();const n=S._n;let k=0,bad=0;for(const [id,v] of Object.entries(n.vals)){if(v===''||v==null)continue;const x=parseFloat(String(v).replace(',','.'));if(isNaN(x)||x<0||x>c.bareme){bad++;continue}S.data.notes.push({id:uid(),eleve:id,classe:c.id,matiere:n.mat,type:n.type,periode:1,note:x,date:todayISO()});k++}
+ if(bad)return toast(bad+' note(s) invalide(s) : entre un nombre entre 0 et '+c.bareme,'x');if(!k)return toast('Saisis au moins une note','x');S._n.vals={};save();render();toast(k+' notes enregistrées · parents informés')}
+function teBulletins(){
+ const c=cls();const el=S.data.eleves.filter(e=>e.classe===c.id).map(e=>({e,m:moyGen(e.id)})).sort((a,b)=>(b.m??-1)-(a.m??-1));
+ return clsSwitch()+`<div class="sec-title" style="margin-top:0">Bulletins · Semestre 1 <small>calcul automatique</small></div>
+ <div class="list">${el.map((x,i)=>`<button class="item" onclick="open('bull',{id:'${x.e.id}'})"><div class="av" style="${i<3?'background:var(--mango);color:var(--ink)':''}">${i+1}</div><div class="grow"><div class="t">${esc(x.e.nom)}</div><div class="muted">${mention(x.m,c.bareme)}</div></div><b>${fmt(x.m)}</b>${I('chev',18)}</button>`).join('')}</div>
+ <p class="muted" style="margin-top:10px">Coefficients : ${c.matieres.map(([m,k])=>m+' '+k).join(', ')}.</p>`;
+}
+VIEWS.bull=v=>{const b=bulletin(v.id);return backbar(b.e.nom,b.c.nom+' · Semestre 1')+`<div class="card"><table class="table"><thead><tr><th>Matière</th><th style="text-align:right">Coef</th><th style="text-align:right">Dev.</th><th style="text-align:right">Compo</th><th style="text-align:right">Moy.</th></tr></thead><tbody>${b.lignes.map(l=>`<tr><td>${esc(l.m)}</td><td class="n">${l.coef}</td><td class="n">${fmt(l.md)}</td><td class="n">${fmt(l.mc)}</td><td class="n">${fmt(l.moy)}</td></tr>`).join('')}</tbody></table>
+ <div class="row" style="margin-top:12px"><div class="grow"><span class="muted">Moyenne</span><div style="font-family:var(--display);font-size:1.7rem;font-weight:800">${fmt(b.moy)}/${b.c.bareme}</div></div><span class="badge ok">${rangTxt(b.rang)} / ${b.effectif}</span></div><p style="margin-top:6px"><b>${b.mention}</b></p></div>
+ <div class="spacer"></div><div class="btns"><button class="btn" onclick="copyTxt(bulletinText('${v.id}'))">${I('copy',20)}Copier pour WhatsApp</button><button class="btn ghost" onclick="toast('Bulletin envoyé au parent dans l\\'app')">${I('send',20)}Envoyer au parent</button></div>`};
+VIEWS.behaviour=v=>{const c=cls();const el=S.data.eleves.filter(e=>e.classe===c.id);return backbar('Comportement',c.nom)+`<div class="list">${el.map(e=>{const p=S.data.comportement.filter(x=>x.eleve===e.id);return `<div class="roll"><div class="av">${initials(e.nom)}</div><div class="grow"><b>${esc(e.nom)}</b><div class="muted">${p.filter(x=>x.type==='positif').length} positif · ${p.filter(x=>x.type==='negatif').length} à revoir</div></div><div class="tri"><button class="p" aria-label="Positif pour ${esc(e.nom)}" onclick="sheetBeh('${e.id}','positif')">+</button><button class="a" aria-label="À revoir pour ${esc(e.nom)}" onclick="sheetBeh('${e.id}','negatif')">−</button></div></div>`}).join('')}</div>`};
+function sheetBeh(id,type){const e=S.data.eleves.find(x=>x.id===id);const sug=type==='positif'?['Très bonne participation','Travail soigné','Aide ses camarades','Gros progrès']:['Bavardages','Devoir non fait','Retard répété','Matériel oublié'];
+ sheet(`<h3>${type==='positif'?'Bon point':'À revoir'} · ${esc(e.nom)}</h3><div class="pill-row">${sug.map(s=>`<button class="chip" onclick="$('#bt').value='${s}'">${s}</button>`).join('')}</div><label class="f" for="bt">Commentaire</label><textarea class="input" id="bt"></textarea><div class="spacer"></div><button class="btn block" onclick="const t=$('#bt').value.trim();if(!t)return toast('Écris un commentaire','x');S.data.comportement.unshift({id:uid(),eleve:'${id}',type:'${type}',texte:t,date:todayISO()});save();closeSheet();render();toast('Ajouté · visible par le parent')">Ajouter</button>`)}
+function sheetDevoir(){const c=cls();sheet(`<h3>Nouveau devoir · ${c.nom}</h3><label class="f" for="dm">Matière</label><select class="input" id="dm">${c.matieres.map(([m])=>`<option>${esc(m)}</option>`).join('')}</select><label class="f" for="dt">Consigne</label><input class="input" id="dt" placeholder="Ex. Exercices 1 à 4 page 58"><label class="f" for="dd">Détails (facultatif)</label><textarea class="input" id="dd"></textarea><label class="f" for="dl">Pour le</label><input class="input" type="date" id="dl" value="${new Date(Date.now()+3*864e5).toISOString().slice(0,10)}"><div class="spacer"></div>
+ <button class="btn block" onclick="const t=$('#dt').value.trim();if(!t)return toast('Écris la consigne','x');S.data.devoirs.push({id:uid(),classe:'${c.id}',matiere:$('#dm').value,titre:t,desc:$('#dd').value,limite:$('#dl').value});save();closeSheet();render();toast('Devoir publié pour les élèves et les parents')">Publier le devoir</button>`)}
+function sheetNewClass(){sheet(`<h3>Nouvelle classe</h3><label class="f" for="ncn">Nom</label><input class="input" id="ncn" placeholder="Ex. CE2 B"><label class="f" for="ncl">Niveau</label>${levelSelect('ncl','CE2')}<label class="f" for="ncf">Type</label><select class="input" id="ncf"><option value="classique">Classique</option><option value="fa">Franco-arabe</option></select><div class="spacer"></div><button class="btn block" onclick="const n=$('#ncn').value.trim();if(!n)return toast('Donne un nom à la classe','x');const c=newClass(n,$('#ncl').value,S.user.prenom,$('#ncf').value);S.user.classes.push(c.id);S.user.cls=c.id;save();closeSheet();go('home');toast('Classe créée · code '+c.code)">Créer</button>`)}
+function teMore(){
+ const c=cls();const el=S.data.eleves.filter(e=>e.classe===c.id);
+ return clsSwitch()+`<div class="list">${[['plus','Créer une classe',"sheetNewClass()"],['book','Devoirs',"open('teDevoirs')"],['star','Comportement',"open('behaviour')"],['msg','Messages parents',"open('teMsgs')"],['users','Élèves et codes parents',"open('teEleves')"]].map(([ic,l,f])=>`<button class="item" onclick="${f}"><div class="av">${I(ic,18)}</div><div class="grow t">${l}</div>${I('chev',18)}</button>`).join('')}</div>
+ <div class="sec-title">Code de la classe</div><div class="card row"><div class="grow"><div style="font-family:var(--display);font-size:1.6rem;font-weight:800;letter-spacing:.04em">${c.code}</div><div class="muted">À donner aux élèves pour rejoindre ${c.nom}</div></div><button class="btn small ghost" onclick="copyTxt('Rejoins la classe ${c.nom} sur Sunu Jàng avec le code ${c.code}')">${I('copy',18)}</button></div>`;
+}
+VIEWS.teDevoirs=v=>{const c=cls();const d=S.data.devoirs.filter(x=>x.classe===c.id);return backbar('Devoirs',c.nom)+`<button class="btn block" onclick="sheetDevoir()">${I('plus',20)}Nouveau devoir</button><div class="spacer"></div><div class="list">${d.map(x=>`<div class="item">${mono(x.matiere,40)}<div class="grow"><div class="t">${esc(x.titre)}</div><div class="muted">Pour le ${dLabel(x.limite)}</div></div><button class="iconbtn" aria-label="Supprimer" onclick="S.data.devoirs=S.data.devoirs.filter(y=>y.id!=='${x.id}');save();render()">${I('x',18)}</button></div>`).join('')||'<div class="empty">Aucun devoir publié.</div>'}</div>`};
+VIEWS.teMsgs=v=>{const ths=S.data.messages.filter(m=>S.data.eleves.find(e=>e.id===m.eleve&&S.user.classes.includes(e.classe)));return backbar('Messages parents')+`<div class="list">${ths.map(th=>{const e=S.data.eleves.find(x=>x.id===th.eleve);const l=th.msgs[th.msgs.length-1];return `<button class="item" onclick="open('thread',{id:'${th.id}',hideNav:true})"><div class="av">${initials(e.nom)}</div><div class="grow"><div class="t">Parent de ${esc(e.nom)}</div><div class="muted" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(l.txt)}</div></div></button>`}).join('')}</div>`};
+VIEWS.teEleves=v=>{const c=cls();const el=S.data.eleves.filter(e=>e.classe===c.id);return backbar('Élèves',c.nom+' · '+el.length+' élèves')+`<button class="btn block" onclick="sheetAddEleve()">${I('plus',20)}Ajouter un élève</button><div class="spacer"></div><div class="list">${el.map(e=>`<div class="item"><div class="av">${initials(e.nom)}</div><div class="grow"><div class="t">${esc(e.nom)}</div><div class="muted">Code parent : <b>${e.codeParent}</b></div></div><button class="iconbtn" aria-label="Copier le code" onclick="copyTxt('Bonjour, voici votre code parent Sunu Jàng pour suivre ${esc(e.nom)} : ${e.codeParent}')">${I('copy',18)}</button></div>`).join('')}</div>`};
+function sheetAddEleve(){const c=cls();sheet(`<h3>Ajouter un élève · ${c.nom}</h3><label class="f" for="an">Prénom et nom</label><input class="input" id="an"><label class="f">Sexe</label><div class="seg"><button class="on" id="sxF" onclick="this.classList.add('on');$('#sxM').classList.remove('on')">Fille</button><button id="sxM" onclick="this.classList.add('on');$('#sxF').classList.remove('on')">Garçon</button></div><div class="spacer"></div>
+ <button class="btn block" onclick="const n=$('#an').value.trim();if(!n)return toast('Écris le nom','x');const e=addEleve({classe:'${c.id}',nom:n,sexe:$('#sxF').classList.contains('on')?'F':'M'});save();closeSheet();render();toast('Élève ajouté · code parent '+e.codeParent)">Ajouter</button>`)}
+
+// ============ ÉCOLE / DIRECTION ============
+function diHome(){
+ const d=S.data;const nE=d.eleves.length;const pend=d.inscriptions.filter(i=>i.statut==='en_attente').length;
+ const ld=lastDay();const dAbs=d.absences.filter(a=>a.date===ld);const pres=dAbs.length?Math.round(dAbs.filter(a=>a.statut!=='absent').length/dAbs.length*100):0;
+ const nov=d.paiements.filter(p=>p.mois==='Nov');const novPaid=nov.filter(p=>p.paye).length;
+ const enc=d.paiements.filter(p=>p.paye).length*d.school.frais;
+ return `<section class="hero">${WAX()}<p style="margin:0;opacity:.85">${esc(d.school.nom)}</p><h2>${pend?pend+' inscription'+(pend>1?'s':'')+' à valider':'Tout est à jour'}</h2>
+ <div class="stats"><div class="stat"><b>${nE}</b><span>Élèves</span></div><div class="stat"><b>${d.classes.length}</b><span>Classes</span></div><div class="stat"><b>${pres} %</b><span>Présence</span></div></div>
+ ${pend?`<button class="btn" onclick="go('inscr')">Voir les demandes</button>`:''}</section>
+ <div class="sec-title">Finances <small>année 2026-2027</small></div>
+ <div class="kpis"><div class="kpi"><span>Encaissé</span><b style="font-size:1.35rem">${fcfa(enc)}</b></div><div class="kpi"><span>Novembre payé</span><b>${nov.length?Math.round(novPaid/nov.length*100):0} %</b><div class="bar"><i style="width:${nov.length?novPaid/nov.length*100:0}%"></i></div></div></div>
+ ${d.classes.length?'':`<div class="sec-title">Pour bien démarrer</div><div class="list">${[['school','Créer vos classes',"go('classes')"],['key','Donner le code de classe à chaque enseignant',"go('classes')"],['users','Partager le lien d\'inscription aux parents',"go('inscr')"]].map(([ic,l,f],i)=>`<button class="item" onclick="${f}"><div class="av">${i+1}</div><div class="grow t">${l}</div>${I('chev',18)}</button>`).join('')}</div>`}
+ <div class="sec-title">Classes</div><div class="list">${d.classes.map(c=>{const el=d.eleves.filter(e=>e.classe===c.id);const ms=el.map(e=>moyGen(e.id)).filter(x=>x!=null);const m=ms.reduce((a,b)=>a+b,0)/ms.length;return `<div class="item"><div class="mono" style="background:var(--ink)">${c.niveau}</div><div class="grow"><div class="t">${c.nom}</div><div class="muted">${esc(c.prof)} · ${el.length} élèves</div></div><div style="text-align:right"><b>${fmt(m)}</b><div class="muted" style="font-size:.75rem">/${c.bareme}</div></div></div>`}).join('')}</div>
+ <div class="sec-title">Communiquer</div><div class="grid2"><button class="tile" onclick="sheetAnnonce()"><div class="mono" style="background:var(--baobab-soft);color:var(--baobab)">${I('megaphone')}</div><div class="t">Envoyer une annonce</div></button><button class="tile" onclick="sheetSondage()"><div class="mono" style="background:var(--baobab-soft);color:var(--baobab)">${I('vote')}</div><div class="t">Créer un sondage</div></button></div>`;
+}
+function diInscr(){
+ const d=S.data;const l=d.inscriptions;
+ return `<div class="sec-title" style="margin-top:6px">Inscriptions <small>${l.filter(i=>i.statut==='en_attente').length} en attente</small></div>
+ <div class="stack">${l.map(i=>{const c=d.classes.find(x=>x.id===i.classe);return `<div class="card"><div class="row"><div class="av">${initials(i.enfant)}</div><div class="grow"><b>${esc(i.enfant)}</b><div class="muted">${i.age} ans · ${c?c.nom:i.niveau}</div></div>${i.statut==='en_attente'?'<span class="badge warn">En attente</span>':i.statut==='acceptee'?'<span class="badge ok">Acceptée</span>':'<span class="badge bad">Refusée</span>'}</div>
+ <p class="muted" style="margin-top:8px">Parent : ${esc(i.parent)} · ${esc(i.tel)}<br>Paiement : ${i.ref?'<b>'+esc(i.ref)+'</b>':'<span style="color:var(--bad)">aucune référence</span>'}</p>
+ ${i.statut==='en_attente'?`<div class="btns" style="margin-top:10px"><button class="btn small" onclick="inscr('${i.id}',true)">${I('check',18)}Accepter</button><button class="btn small danger" onclick="inscr('${i.id}',false)">Refuser</button></div>`:i.code?`<p style="margin-top:8px">Code parent envoyé par SMS : <b>${i.code}</b></p>`:''}</div>`}).join('')}</div>
+ <div class="sec-title">Lien d'inscription en ligne</div><div class="card row"><div class="grow"><b>sunujang.org/i/${d.school.code.toLowerCase()}</b><div class="muted">À partager sur WhatsApp ou Facebook</div></div><button class="btn small ghost" onclick="copyTxt('Inscrivez votre enfant au ${esc(d.school.nom)} : https://sunujang.org/i/${d.school.code.toLowerCase()}')">${I('copy',18)}</button></div>`;
+}
+function inscr(id,ok){const i=S.data.inscriptions.find(x=>x.id===id);i.statut=ok?'acceptee':'refusee';if(ok){if(!i.classe){const c=S.data.classes.find(x=>x.niveau===i.niveau)||newClass(i.niveau+' A',i.niveau,'À attribuer','classique');i.classe=c.id}const e=addEleve({classe:i.classe,nom:i.enfant});i.code=e.codeParent}save();render();toast(ok?'Inscription acceptée · code parent envoyé':'Inscription refusée · parent prévenu')}
+function diClasses(){
+ const d=S.data;
+ return `<div class="sec-title" style="margin-top:6px">Classes</div><button class="btn block" onclick="sheetClasse()">${I('plus',20)}Créer une classe</button><div class="spacer"></div>
+ <div class="list">${d.classes.map(c=>`<div class="item"><div class="mono" style="background:var(--ink)">${c.niveau}</div><div class="grow"><div class="t">${c.nom}</div><div class="muted">${esc(c.prof)} · code ${c.code} · notes sur ${c.bareme}</div></div></div>`).join('')}</div>
+ <div class="sec-title">Enseignants</div><div class="list">${[...new Set(d.classes.map(c=>c.prof))].map(p=>`<div class="item"><div class="av">${initials(p.replace(/^(M\.|Mme) /,''))}</div><div class="grow"><div class="t">${esc(p)}</div><div class="muted">${d.classes.filter(c=>c.prof===p).map(c=>c.nom).join(', ')}</div></div></div>`).join('')}</div>`;
+}
+function sheetClasse(){sheet(`<h3>Nouvelle classe</h3><label class="f" for="cn">Nom</label><input class="input" id="cn" placeholder="Ex. 6e A"><label class="f" for="cl">Niveau</label><select class="input" id="cl">${LEVELS.map(l=>`<option>${l.id}</option>`).join('')}</select><label class="f" for="cf">Type</label><select class="input" id="cf"><option value="classique">Classique</option><option value="fa">Franco-arabe</option></select><label class="f" for="cp">Enseignant principal</label><input class="input" id="cp" placeholder="Ex. Mme Fall"><div class="spacer"></div>
+ <button class="btn block" onclick="const n=$('#cn').value.trim(),p=$('#cp').value.trim(),l=$('#cl').value;if(!n||!p)return toast('Remplis le nom et l\\'enseignant','x');const c=newClass(n,l,p,$('#cf').value);save();closeSheet();render();toast('Classe créée · code '+c.code+' à donner à l\\'enseignant')">Créer</button>`)}
+function diPay(){
+ const d=S.data;const mo=d.mois;
+ return `<div class="sec-title" style="margin-top:6px">Paiements <small>${fcfa(d.school.frais)}/mois</small></div>
+ <div class="card" style="overflow-x:auto;padding:12px"><table class="table"><thead><tr><th>Classe</th>${mo.slice(0,4).map(m=>`<th style="text-align:right">${m}</th>`).join('')}</tr></thead><tbody>
+ ${d.classes.map(c=>{const el=d.eleves.filter(e=>e.classe===c.id);return `<tr><td><b>${c.nom}</b></td>${mo.slice(0,4).map(m=>{const ps=d.paiements.filter(p=>p.mois===m&&el.some(e=>e.id===p.eleve));const k=ps.filter(p=>p.paye).length;return `<td class="n">${k}/${el.length}</td>`}).join('')}</tr>`}).join('')}</tbody></table></div>
+ <div class="sec-title">Retards de paiement · Novembre</div><div class="list">${d.eleves.filter(e=>!d.paiements.find(p=>p.eleve===e.id&&p.mois==='Nov').paye).slice(0,8).map(e=>`<div class="item"><div class="av">${initials(e.nom)}</div><div class="grow"><div class="t">${esc(e.nom)}</div><div class="muted">${d.classes.find(c=>c.id===e.classe).nom}</div></div><button class="btn small ghost" onclick="toast('Rappel envoyé au parent par SMS')">Relancer</button></div>`).join('')}</div>
+ <div class="spacer"></div><button class="btn block mango" onclick="toast('Rappels envoyés à tous les parents en retard')">${I('send',20)}Relancer tout le monde</button>`;
+}
+function diMore(){
+ const d=S.data;const sd=d.sondages;
+ return `<div class="sec-title" style="margin-top:6px">Sondages</div>${sd.map(s=>{const tot=Object.values(s.reponses).reduce((a,b)=>a+b,0);return `<div class="card"><b>${esc(s.question)}</b>${[['oui','Oui'],['non','Non'],['peut_etre','Peut-être']].map(([k,l])=>`<div style="margin-top:10px"><div class="row"><span class="grow">${l}</span><b>${s.reponses[k]}</b></div><div class="bar"><i style="width:${tot?s.reponses[k]/tot*100:0}%"></i></div></div>`).join('')}<p class="muted" style="margin-top:8px">${tot} réponses</p></div>`}).join('<div class="spacer"></div>')}
+ <div class="spacer"></div><button class="btn ghost block" onclick="sheetSondage()">${I('plus',20)}Nouveau sondage</button>
+ <div class="sec-title">Annonces envoyées</div><div class="stack">${d.annonces.map(a=>`<div class="card"><b>${esc(a.titre)}</b><p class="muted">${esc(a.txt)}</p></div>`).join('')}</div>
+ <div class="sec-title">Établissement</div><div class="list"><div class="item"><div class="av">${I('school',18)}</div><div class="grow"><div class="t">${esc(d.school.nom)}</div><div class="muted">${esc(d.school.ville)}</div></div></div><div class="item"><div class="av">${I('wallet',18)}</div><div class="grow"><div class="t">Mensualité</div><div class="muted">${fcfa(d.school.frais)} · Wave ${d.school.wave}</div></div></div><div class="item"><div class="av">${I('key',18)}</div><div class="grow"><div class="t">Code établissement</div><div class="muted">${d.school.code}</div></div></div></div>`;
+}
+function sheetAnnonce(){sheet(`<h3>Annonce à tous les parents</h3><label class="f" for="at">Titre</label><input class="input" id="at"><label class="f" for="ax">Message</label><textarea class="input" id="ax"></textarea><p class="muted" style="margin-top:6px">Envoyée dans l'app et par SMS aux parents sans smartphone.</p><div class="spacer"></div><button class="btn block" onclick="const t=$('#at').value.trim(),x=$('#ax').value.trim();if(!t||!x)return toast('Remplis le titre et le message','x');S.data.annonces.unshift({id:uid(),titre:t,txt:x,date:todayISO()});save();closeSheet();render();toast('Annonce envoyée')">Envoyer</button>`)}
+function sheetSondage(){sheet(`<h3>Nouveau sondage</h3><label class="f" for="sq">Question</label><textarea class="input" id="sq" placeholder="Ex. Êtes-vous d'accord pour des cours de renforcement le samedi ?"></textarea><p class="muted" style="margin-top:6px">Les parents répondent Oui, Non ou Peut-être.</p><div class="spacer"></div><button class="btn block" onclick="const q=$('#sq').value.trim();if(!q)return toast('Écris la question','x');S.data.sondages.forEach(s=>s.actif=false);S.data.sondages.unshift({id:uid(),question:q,reponses:{oui:0,non:0,peut_etre:0},maReponse:null,actif:true});save();closeSheet();render();toast('Sondage publié')">Publier</button>`)}
+
+// ---------- parent sans enfant lié / ajout d'un enfant ----------
+function paEmpty(){
+ const pend=(S.user.pending||[]).map(id=>S.data.inscriptions.find(i=>i.id===id)).filter(Boolean);
+ return `<section class="hero">${WAX()}<h2>Ajoutez votre enfant</h2><p>Pour voir ses notes, ses absences, ses devoirs et payer la scolarité.</p><button class="btn" onclick="sheetAddKid()">${I('plus',20)}Ajouter mon enfant</button></section>
+ ${pend.length?`<div class="sec-title">Mes demandes d'inscription</div><div class="list">${pend.map(i=>`<div class="item"><div class="av">${initials(i.enfant)}</div><div class="grow"><div class="t">${esc(i.enfant)}</div><div class="muted">${esc(i.ecole||S.data.school.nom)} · ${esc(i.niveau)}</div></div>${i.statut==='acceptee'?`<button class="btn small" onclick="linkKid('${i.code}')">Suivre</button>`:i.statut==='refusee'?'<span class="badge bad">Refusée</span>':'<span class="badge warn">En attente</span>'}</div>`).join('')}</div>`:''}
+ <div class="sec-title">En attendant</div><div class="list">
+ <button class="item" onclick="S.role='student';S.user=null;save();render()"><div class="av">${I('book',18)}</div><div class="grow"><div class="t">Faire réviser votre enfant</div><div class="muted">Cours et quiz gratuits du CI à la Terminale</div></div>${I('chev',18)}</button>
+ <button class="item" onclick="copyTxt('Bonjour, notre école peut s\\'inscrire gratuitement sur Sunu Jàng pour les notes, absences et paiements : https://sunujang.org/ecole')"><div class="av">${I('school',18)}</div><div class="grow"><div class="t">Votre école n'est pas sur Sunu Jàng ?</div><div class="muted">Envoyez-lui l'invitation par WhatsApp</div></div>${I('copy',18)}</button></div>`;
+}
+function linkKid(code){const ks=S.data.eleves.filter(e=>e.codeParent===code);if(!ks.length)return toast('Code parent introuvable. Vérifiez auprès de l\'école.','x');ks.forEach(k=>{if(!S.user.kids.includes(k.id))S.user.kids.push(k.id)});S.user.kid=ks[0].id;S.user.sub='Parent · '+S.user.kids.map(id=>S.data.eleves.find(e=>e.id===id).nom.split(' ')[0]).join(', ');save();closeSheet();go('home');toast(ks[0].nom+' ajouté')}
+function sheetAddKid(mode='code'){
+ const sc=S.data.school;
+ sheet(`<h3>Ajouter mon enfant</h3><div class="tabs2" style="margin-top:10px"><button class="${mode==='code'?'on':''}" onclick="sheetAddKid('code')">J'ai un code parent</button><button class="${mode==='inscr'?'on':''}" onclick="sheetAddKid('inscr')">L'inscrire à l'école</button></div>
+ ${mode==='code'?`<p class="muted">Le code parent est sur la fiche d'inscription, ou demandez-le à l'enseignant.</p><label class="f" for="kc">Code parent</label><input class="input" id="kc" placeholder="Ex. PAR-4100" autocapitalize="characters"><div class="spacer"></div><button class="btn block" onclick="linkKid($('#kc').value.trim().toUpperCase())">Ajouter</button>`:
+ `<label class="f" for="ks">École</label><select class="input" id="ks"><option>${esc(sc.nom)} — ${esc(sc.ville)}</option></select>
+ <label class="f" for="kn">Prénom et nom de l'enfant</label><input class="input" id="kn"><div class="grid2"><div><label class="f" for="ka">Âge</label><input class="input" id="ka" inputmode="numeric"></div><div><label class="f" for="kl">Classe demandée</label>${levelSelect('kl','CM2')}</div></div>
+ ${sc.frais?`<div class="card" style="margin-top:14px;background:var(--mango-soft);border-color:#F3D9A6"><b>Frais d'inscription</b><p class="muted" style="color:var(--ink-2)">Payez par Wave ou Orange Money au ${esc(sc.wave)}, puis collez la référence. Vous pouvez aussi payer sur place.</p></div><label class="f" for="kr">Référence du paiement (facultatif)</label><input class="input" id="kr" placeholder="Ex. WV-88213">`:''}
+ <div class="spacer"></div><button class="btn block" onclick="sendInscr()">Envoyer la demande</button>`}`);
+}
+function sendInscr(){const n=$('#kn').value.trim();if(!n)return toast('Indiquez le nom de l\'enfant','x');const lv=$('#kl').value;const c=S.data.classes.find(x=>x.niveau===lv);
+ const i={id:uid(),enfant:n,age:parseInt($('#ka').value)||'',niveau:lv,classe:c?c.id:null,parent:S.user.prenom,tel:S.user.tel||'',ref:($('#kr')||{value:''}).value.trim(),statut:'en_attente',date:todayISO(),ecole:S.data.school.nom};
+ S.data.inscriptions.unshift(i);S.user.pending=[...(S.user.pending||[]),i.id];save();closeSheet();render();toast('Demande envoyée à l\'école')}
+const P=f=>()=>S.user.kids&&S.user.kids.length?f():paEmpty();
+
+// ---------- rôles ----------
+const ROLES={
+ student:{tabs:[{id:'home',icon:'home',label:'home',fn:stHome},{id:'courses',icon:'book',label:'courses',fn:stCourses},{id:'quiz',icon:'quiz',label:'quiz',fn:stQuizHome},{id:'exams',icon:'award',label:'exams',fn:stExams},{id:'me',icon:'user',label:'me',fn:stMe}]},
+ parent:{tabs:[{id:'home',icon:'home',label:'home',fn:P(paHome)},{id:'notes',icon:'chart',label:'notes',fn:P(paNotes)},{id:'school',icon:'school',label:'school',fn:P(paSchool)},{id:'pay',icon:'wallet',label:'pay',fn:P(paPay)},{id:'msgs',icon:'msg',label:'msgs',fn:P(paMsgs)}]},
+ teacher:{tabs:[{id:'home',icon:'home',label:'home',fn:teHome},{id:'call',icon:'check',label:'call',fn:teCall},{id:'notes',icon:'clip',label:'notes',fn:teNotes},{id:'bulletins',icon:'chart',label:'bulletins',fn:teBulletins},{id:'more',icon:'grid',label:'more',fn:teMore}]},
+ director:{tabs:[{id:'home',icon:'chart',label:'dash',fn:diHome},{id:'inscr',icon:'users',label:'inscr',fn:diInscr},{id:'classes',icon:'school',label:'classes',fn:diClasses},{id:'pay',icon:'wallet',label:'pay',fn:diPay},{id:'more',icon:'grid',label:'more',fn:diMore}]}};
+
+restoreView();
+if(S.role&&S.user&&!ROLES[S.role].tabs.find(x=>x.id===S.tab))S.tab='home';
+addEventListener('online',render);addEventListener('offline',render);
+addEventListener('keydown',e=>{if(e.key==='Escape')closeSheet()});
+render();
+</script>
+</body>
+</html>
