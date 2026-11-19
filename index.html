@@ -240,6 +240,8 @@ textarea.input{padding:12px 14px;min-height:96px;resize:vertical}
 </head>
 <body>
 <div id="root"></div>
+<script src="contenu/cm2-maths.js"></script>
+<script src="contenu/cm2-francais.js"></script>
 <script>
 /* ============================================================
    Sunu Jàng 2.0 — app connectée (Supabase) + mode démo
@@ -495,8 +497,15 @@ const BANK={
  ['L\'emblème au centre du drapeau sénégalais est :',['un lion','une étoile verte','un baobab','un soleil'],1,'Une étoile verte à cinq branches sur la bande jaune.'],
  ['L\'hymne national du Sénégal s\'appelle :',['Le Lion rouge','Pincez tous vos koras','Afrique mon Afrique','Ndiarel'],1,'« Pincez tous vos koras, frappez les balafons », écrit par Senghor.']],
 };
+// contenu par niveau (fichiers contenu/*.js)
+(window.SJ_CONTENT||[]).forEach(c=>{Object.assign(CHAPTERS,c.chapters||{});Object.assign(LESSONS,c.lessons||{});Object.assign(BANK,c.bank||{})});
+// niveau dont on affiche le programme : celui de l'élève s'il a un contenu propre pour ce cycle
+function lvlKey(cy,s){const lv=S&&S.student&&S.student.niveau;if(lv&&levelOf(lv).cycle===cy&&CHAPTERS[lv+'|'+s])return lv+'|'+s;return null}
 function bankFor(cycle,subj){
  if(AR_SUBJ[subj])return BANK['ar|'+subj]||BANK['ar|Hadith'];
+ const lk=lvlKey(cycle,subj);if(lk&&BANK[lk])return BANK[lk];
+ // examens : le CFEE utilise le programme de CM2
+ const ex={elem:'CM2',moyen:'3e',lycee:'Tle'}[cycle];if(levelOf(S.student.niveau).cycle!==cycle&&BANK[ex+'|'+subj])return BANK[ex+'|'+subj];
  const pool=BANK[cycle+'|'+subj]||BANK['gen|'+subj]||
   (subj==='Histoire-Géo'&&cycle==='lycee'?BANK['moyen|Histoire-Géo']:null)||
   (subj==='SVT'?BANK['moyen|SVT']:null)||(subj==='Sciences physiques'?BANK['moyen|Sciences physiques']:null)||
@@ -524,7 +533,7 @@ const AR_SUBJ={
  'Tawhîd':['Unicité et foi','التوحيد','ت','#2E4A62'],
  'Akhlâq':['Bonne conduite','الأخلاق','خ','#5B6B2F']};
 const isAr=s=>!!AR_SUBJ[s];
-const chKey=(cy,s)=>isAr(s)?'ar|'+s:cy+'|'+s;
+const chKey=(cy,s)=>isAr(s)?'ar|'+s:(lvlKey(cy,s)||cy+'|'+s);
 function subjectsFor(cy,fil){const base=SUBJECTS[cy];if(fil!=='fa')return base;return [...base.filter(s=>s!=='Arabe'&&s!=='Informatique'),...Object.keys(AR_SUBJ)]}
 const chTitle=c=>c.includes(' · ')?`${esc(c.split(' · ')[1])}<div class="arsub" lang="ar">${esc(c.split(' · ')[0])}</div>`:esc(c);
 const subjLabel=s=>isAr(s)?`${esc(s)} <span class="arsub" lang="ar">${AR_SUBJ[s][1]}</span>`:esc(s);
@@ -967,7 +976,7 @@ function stHome(){
  const st=S.student,cy=stCycle(),lvl=levelOf(st.niveau);
  const dv=S.data.devoirs.filter(d=>d.classe===st.classe).sort((a,b)=>a.limite.localeCompare(b.limite));
  const pct=Math.min(100,Math.round(st.today/st.goal*100));
- const subs=subjectsFor(cy,st.fil);const cont=(st.fil==='fa'?'ar|Hadith|0':Object.keys(LESSONS).find(k=>k.startsWith(cy+'|')))||'';const [,cs,ci]=cont.split('|');
+ const subs=subjectsFor(cy,st.fil);const cont=(st.fil==='fa'?'ar|Hadith|0':(Object.keys(LESSONS).find(k=>k.startsWith(st.niveau+'|')&&!st.done[k])||Object.keys(LESSONS).find(k=>k.startsWith(cy+'|'))))||'';const [,cs,ci]=cont.split('|');
  const mates=st.classe?S.data.eleves.filter(e=>e.classe===st.classe).sort((a,b)=>b.points-a.points).slice(0,3):[];
  return `<section class="hero">${WAX()}<div class="row" style="align-items:flex-start"><div class="grow"><h2>Objectif du jour : ${st.goal} activités</h2><p>${st.today>=st.goal?'Bravo, objectif atteint ! Continue sur ta lancée.':'Encore '+(st.goal-st.today)+' pour garder ta série.'}</p></div><div class="ring" style="--p:${pct}"><span>${st.today}/${st.goal}</span></div></div>
  <div class="stats"><div class="stat"><b>${st.streak} j</b><span>Série</span></div><div class="stat"><b>${st.points}</b><span>Points</span></div><div class="stat"><b>${Object.keys(st.done).length}</b><span>Leçons lues</span></div></div>
