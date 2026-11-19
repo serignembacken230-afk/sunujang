@@ -242,7 +242,7 @@ textarea.input{padding:12px 14px;min-height:96px;resize:vertical}
 <div id="root"></div>
 <script>
 /* ============================================================
-   Sunu Jàng 2.0 — prototype complet (données de démonstration)
+   Sunu Jàng 2.0 — app connectée (Supabase) + mode démo
    Profils : Élève · Parent · Enseignant · École
    ============================================================ */
 
@@ -299,7 +299,10 @@ const $=s=>document.querySelector(s);
 const initials=n=>n.split(' ').map(w=>w[0]).slice(0,2).join('').toUpperCase();
 const fmt=(n,d=2)=>n==null||isNaN(n)?'—':Number(n).toFixed(d).replace('.',',');
 const fcfa=n=>Number(n).toLocaleString('fr-FR').replace(/ | /g,' ')+' F CFA';
-const uid=()=>Math.random().toString(36).slice(2,9);
+const uid=()=>{try{const a=new Uint8Array(9);crypto.getRandomValues(a);return [...a].map(x=>(x%36).toString(36)).join('')}catch(e){return Math.random().toString(36).slice(2,11)}};
+// codes de connexion lisibles (sans 0/O/1/I/L)
+const ALPH='ABCDEFGHJKMNPQRSTUVWXYZ23456789';
+const gen=n=>{const a=new Uint8Array(n);crypto.getRandomValues(a);return [...a].map(x=>ALPH[x%ALPH.length]).join('')};
 function seeded(seed){let h=2166136261;for(const c of seed)h=Math.imul(h^c.charCodeAt(0),16777619);return()=>{h=Math.imul(h^(h>>>15),2246822507);h=Math.imul(h^(h>>>13),3266489909);h^=h>>>16;return (h>>>0)/4294967296}}
 const todayISO=()=>new Date().toISOString().slice(0,10);
 const dLabel=iso=>new Date(iso+'T12:00:00').toLocaleDateString('fr-FR',{weekday:'short',day:'numeric',month:'short'});
@@ -671,16 +674,105 @@ function seedData(){
   {id:uid(),enfant:'Maïmouna Ndiaye',age:11,niveau:'CM2',classe:'c1',parent:'Aminata Ndiaye',tel:'77 654 32 10',ref:'WV-88213',statut:'en_attente',date:'2026-11-13'},
   {id:uid(),enfant:'Babacar Seck',age:15,niveau:'3e',classe:'c2',parent:'Omar Seck',tel:'76 111 22 33',ref:'OM-55102',statut:'en_attente',date:'2026-11-12'},
   {id:uid(),enfant:'Awa Cissé',age:10,niveau:'CM2',classe:'c1',parent:'Daba Cissé',tel:'70 987 65 43',ref:'',statut:'en_attente',date:'2026-11-11'}];
- return {school,classes,eleves,notes,absences,paiements,mois,devoirs,comportement,messages,sondages,annonces,inscriptions,resultats:[],codes:['JANG-2026','BFEM-PRO','BAC-PRO']};
+ return {school,classes,eleves,notes,absences,paiements,mois,devoirs,comportement,messages,sondages,annonces,inscriptions,votes:[],resultats:[],codes:['JANG-2026','BFEM-PRO','BAC-PRO']};
 }
 
 // ---------- état ----------
 let S;
-const DEF=()=>({lang:'fr',fs:1,contrast:false,saver:false,role:null,tab:'home',user:null,view:null,data:seedData(),
- student:{prenom:'',niveau:'3e',fil:'classique',streak:4,points:620,done:{},premium:false,classe:null,goal:3,today:1}});
-function load(){try{const r=localStorage.getItem('sunujang2');if(r){S=JSON.parse(r);return}}catch(e){}S=DEF()}
-function save(){try{localStorage.setItem('sunujang2',JSON.stringify(S))}catch(e){}}
-load();
+const BLANK_SCHOOL=()=>({code:'',nom:'',ville:'',directeur:'',tel:'',wave:'—',om:'—',frais:0,periode:'semestre'});
+const NEW_STUDENT=()=>({prenom:'',niveau:'3e',fil:'classique',streak:0,points:0,done:{},premium:false,classe:null,goal:3,today:0,day:todayISO()});
+// live = compte réel synchronisé ; sinon démo locale
+const DEF=()=>({lang:'fr',fs:1,contrast:false,saver:false,role:null,tab:'home',user:null,view:null,live:false,keys:[],kinfo:[],espace:null,_sync:{},
+ data:emptyData(BLANK_SCHOOL()),student:NEW_STUDENT()});
+function load(){try{const r=localStorage.getItem('sunujang2');if(r){S=JSON.parse(r);S.keys=S.keys||[];S.kinfo=S.kinfo||[];S._sync=S._sync||{};S.data.votes=S.data.votes||[];return}}catch(e){}S=DEF()}
+function save(){try{localStorage.setItem('sunujang2',JSON.stringify(S))}catch(e){}if(S.live)schedulePush()}
+// série quotidienne de l'élève
+function dayTick(){const st=S.student;if(!st)return;const d=todayISO();if(st.day!==d){const y=new Date(Date.now()-864e5).toISOString().slice(0,10);if(st.day!==y)st.streak=0;st.today=0;st.day=d}}
+
+// ================= SYNCHRONISATION (Supabase) =================
+const SB={url:'https://famxmrcwtppoacrrrpmp.supabase.co',key:'sb_publishable_sDsJmUpanhNvEiauXRaRBA_TW1XkodL'};
+async function api(fn,args){
+ const r=await fetch(SB.url+'/rest/v1/rpc/'+fn,{method:'POST',headers:{apikey:SB.key,'Content-Type':'application/json'},body:JSON.stringify(args||{})});
+ const txt=await r.text();let j=null;try{j=txt?JSON.parse(txt):null}catch(e){}
+ if(!r.ok)throw new Error((j&&(j.message||j.hint))||('Erreur serveur '+r.status));return j}
+const KINDS=['classes','eleves','notes','absences','paiements','devoirs','comportement','messages','sondages','annonces','inscriptions','votes'];
+const itemId=(k,o)=>k==='absences'?o.eleve+'|'+o.date:k==='paiements'?o.eleve+'|'+o.mois:o.id;
+const strip=o=>{const c={...o};delete c._e;return c};
+function espOf(k,o){if(o._e)return o._e;const d=S.data;
+ if(o.classe){const c=d.classes.find(x=>x.id===o.classe);if(c&&c._e)return c._e}
+ if(o.eleve){const e=d.eleves.find(x=>x.id===o.eleve);if(e&&e._e)return e._e}
+ if(o.sondage){const s=d.sondages.find(x=>x.id===o.sondage);if(s&&s._e)return s._e}
+ return S.espace}
+function flatten(){const out={};const d=S.data;
+ for(const k of KINDS)for(const o of (d[k]||[])){const id=itemId(k,o);const e=espOf(k,o);if(!id||!e)continue;o._e=e;out[e+'|'+k+'|'+id]={kind:k,id,espace:e,data:strip(o)}}
+ return out}
+function snapshot(){const f=flatten(),m={};for(const k in f)m[k]=JSON.stringify(f[k].data);return m}
+let pushT=null,pushing=false,pushAgain=false;
+function schedulePush(){clearTimeout(pushT);pushT=setTimeout(()=>pushNow().catch(()=>{}),600)}
+function pendingCount(){if(!S.live)return 0;const f=flatten();let n=0;for(const k in f)if(S._sync[k]!==JSON.stringify(f[k].data))n++;for(const k in S._sync)if(!f[k])n++;return n}
+async function pushNow(){
+ if(!S.live||!S.keys.length)return true;if(pushing){pushAgain=true;return false}
+ const f=flatten();const ch=[];
+ for(const k in f){const j=JSON.stringify(f[k].data);if(S._sync[k]!==j)ch.push({key:k,j,it:f[k]})}
+ for(const k in S._sync)if(!f[k]){const [e,kind,...rest]=k.split('|');ch.push({key:k,del:true,it:{kind,id:rest.join('|'),espace:e,data:{},deleted:true}})}
+ if(!ch.length)return true;if(navigator.onLine===false){setNet();return false}
+ // les classes d'abord (elles enregistrent les codes), puis les élèves, puis le reste
+ const ord={classes:0,eleves:1};ch.sort((a,b)=>(ord[a.it.kind]??2)-(ord[b.it.kind]??2));
+ pushing=true;setNet();let denied=0;
+ try{for(let i=0;i<ch.length;i+=150){const part=ch.slice(i,i+150);
+   const res=await api('sj_push',{p_keys:S.keys,p_items:part.map(c=>c.it)});
+   const bad=new Set((res.rejected||[]).map(r=>r.kind+'|'+r.id));
+   for(const c of part){const kk=c.it.kind+'|'+c.it.id;if(bad.has(kk))denied++;
+    if(c.del)delete S._sync[c.key];else S._sync[c.key]=c.j}}
+  try{localStorage.setItem('sunujang2',JSON.stringify(S))}catch(e){}
+  if(denied)toast(denied+' modification(s) refusée(s) : vous n\'avez pas les droits','x');
+  return true}
+ catch(e){return false}
+ finally{pushing=false;setNet();if(pushAgain){pushAgain=false;schedulePush()}}}
+async function pullNow(opts={}){
+ if(!S.live||!S.keys.length)return null;
+ const ok=await pushNow();if(!ok&&!opts.force)return null;
+ const res=await api('sj_pull',{p_keys:S.keys});
+ const d=emptyData(BLANK_SCHOOL());d.resultats=(S.data&&S.data.resultats)||[];d.codes=(S.data&&S.data.codes)||d.codes;
+ const schools={};
+ for(const it of res.items||[]){const o=it.data||{};o._e=it.espace;
+  if(it.kind==='school'){schools[it.espace]=o;continue}
+  if(d[it.kind])d[it.kind].push(o)}
+ S.kinfo=res.keys||[];
+ // ne garder que les codes reconnus par le serveur
+ const known=new Set(S.kinfo.map(k=>k.cle));S.keys=S.keys.filter(k=>known.has(String(k).trim().toUpperCase()));
+ const dirK=S.kinfo.find(k=>k.role==='director');
+ S.espace=dirK?dirK.espace:(S.kinfo[0]||{}).espace||null;
+ d.school=schools[S.espace]||Object.values(schools)[0]||BLANK_SCHOOL();d.schools=schools;
+ const ec={};for(const e of res.espaces||[])ec[e.id]=e.code_public;S.codes=ec;
+ S.data=d;S._sync=snapshot();buildUser();
+ try{localStorage.setItem('sunujang2',JSON.stringify(S))}catch(e){}
+ return res}
+function setNet(){const el=document.querySelector('.net');if(!el)return;const on=navigator.onLine!==false;const p=pendingCount();
+ el.className='net'+(on?'':' off');el.innerHTML='<i></i>'+(!S.live?'Démo':!on?'Hors ligne':pushing||p?'Envoi…':'En ligne');
+ el.title=!S.live?'Données d\'exemple, rien n\'est envoyé':!on?'Hors connexion : tes données seront envoyées plus tard':p?p+' modification(s) en attente d\'envoi':'Tout est enregistré'}
+// recalcule le profil à partir des codes reconnus
+function buildUser(){
+ const ki=S.kinfo,d=S.data,u=S.user||{};
+ if(S.role==='teacher'){const ids=d.classes.filter(c=>ki.some(k=>(k.role==='teacher'&&k.classe===c.id)||(k.role==='director'&&k.espace===c._e))).map(c=>c.id);
+  u.classes=ids;if(!ids.includes(u.cls))u.cls=ids[0]||null;const c=d.classes.find(x=>x.id===u.cls);u.sub='Enseignant'+(c?' · '+c.nom:'')+(d.school.nom&&!d.school.independant?' · '+d.school.nom:'');if(c&&!u.prenom)u.prenom=c.prof}
+ if(S.role==='parent'){const kids=ki.filter(k=>k.role==='parent').map(k=>k.eleve).filter(id=>d.eleves.some(e=>e.id===id));
+  u.kids=kids;if(!kids.includes(u.kid))u.kid=kids[0]||null;u.pending=ki.filter(k=>k.role==='inscription').map(k=>k.item);
+  u.sub='Parent'+(kids.length?' · '+kids.map(id=>d.eleves.find(e=>e.id===id).nom.split(' ')[0]).join(', '):'')}
+ if(S.role==='director'){u.sub='Direction · '+(d.school.nom||'');if(!u.prenom)u.prenom=d.school.directeur||'Direction'}
+ if(S.role==='student'){const k=ki.find(k=>k.role==='student');const c=k&&d.classes.find(x=>x.id===k.classe);
+  if(c){S.student.classe=c.id;u.sub='Élève · '+c.nom+(d.school.nom?' · '+d.school.nom:'')}
+  else{S.student.classe=null;u.sub='Élève · '+S.student.niveau+(S.student.fil==='fa'?' · franco-arabe':'')}}
+ S.user=u}
+// ajoute un code puis recharge ; renvoie les infos du code ou null
+async function addKey(code){code=String(code||'').trim().toUpperCase();if(!code)return null;
+ if(navigator.onLine===false){toast('Connexion internet nécessaire pour cette étape','x');return null}
+ const had=S.keys.includes(code);if(!had)S.keys.push(code);
+ try{await pullNow({force:true})}catch(e){if(!had)S.keys=S.keys.filter(k=>k!==code);toast('Impossible de joindre le serveur. Réessaie.','x');return null}
+ return S.kinfo.find(k=>k.cle===code)||null}
+async function refresh(){if(!S.live||!S.keys.length||document.hidden)return;try{const before=JSON.stringify(S._sync);await pullNow();if(JSON.stringify(S._sync)!==before&&!$('#scrim')&&!document.activeElement.matches('input,textarea,select'))render();setNet()}catch(e){setNet()}}
+function wait(on){const b=document.activeElement;if(b&&b.tagName==='BUTTON'){b.disabled=on;b.style.opacity=on?.6:1}}
+load();dayTick();
 
 // ---------- calculs scolaires ----------
 // Moyenne d'une matière = (moyenne des devoirs + 2 × composition) / 3 (usage courant au Sénégal)
@@ -701,7 +793,7 @@ function bulletin(eleveId,per=1){
 }
 function moyGen(id,per=1){const e=S.data.eleves.find(x=>x.id===id);const c=S.data.classes.find(x=>x.id===e.classe);let t=0,k=0;for(const [m,coef] of c.matieres){const r=moyMatiere(id,m,per);if(r.moy!=null){t+=r.moy*coef;k+=coef}}return k?t/k:null}
 function mention(m,b){if(m==null)return '';const x=m/b*20;return x>=16?'Félicitations':x>=14?'Encouragements':x>=12?'Tableau d\'honneur':x>=10?'Passable':'Doit redoubler d\'efforts'}
-const rangTxt=r=>r===1?'1er':r+'e';
+const rangTxt=r=>!r?'—':r===1?'1er':r+'e';
 function absCount(id){const a=S.data.absences.filter(x=>x.eleve===id);return {abs:a.filter(x=>x.statut==='absent').length,ret:a.filter(x=>x.statut==='retard').length,tot:a.length}}
 
 // ---------- rendu ----------
@@ -714,16 +806,17 @@ function render(){
  const r=ROLES[S.role];
  const body=S.view?S.view.fn(S.view):r.tabs.find(x=>x.id===S.tab).fn();
  root.innerHTML=`<div class="app">${S.view?'':topbar()}<main id="main">${body}</main>${S.view&&S.view.hideNav?'':nav()}</div>`;
+ setNet();
 }
 function go(tab){S.tab=tab;S.view=null;save();render();scrollTo(0,0)}
-function open(fn,args={}){S.view={fn:VIEWS[fn],name:fn,...args};render();scrollTo(0,0)}
+function openV(fn,args={}){S.view={fn:VIEWS[fn],name:fn,...args};render();scrollTo(0,0)}
 // VIEWS are stored by name so state survives reload
 function restoreView(){if(S.view&&S.view.name)S.view.fn=VIEWS[S.view.name];else S.view=null}
 function back(){S.view=null;render()}
 function topbar(){
  const u=S.user;const online=navigator.onLine!==false;
  return `<header class="top"><div class="who"><div class="sub">${esc(u.sub)}</div><div class="hello">${t('hello')}, ${esc(u.prenom)}</div></div>
- <span class="net ${online?'':'off'}" title="${online?'Synchronisé':'Hors connexion : tes données seront envoyées plus tard'}"><i></i>${online?'En ligne':'Hors ligne'}</span>
+ <span class="net ${online?'':'off'}"><i></i>${online?'En ligne':'Hors ligne'}</span>
  <button class="iconbtn" aria-label="Notifications" onclick="sheetNotifs()">${I('bell')}<span class="dot"></span></button>
  <button class="iconbtn" aria-label="Réglages" onclick="sheetSettings()">${I('gear')}</button></header>`;
 }
@@ -761,7 +854,7 @@ function viewLogin(){
   <label class="f">Ton école</label>${trackPick(S.student.fil,'S.student.fil')}
   <label class="f" for="cc">Code de ta classe <span class="muted">(facultatif)</span></label><input class="input" id="cc" placeholder="Ex. 3EB-7390" value="${fv('cc')}" autocapitalize="characters"><p class="muted" style="margin-top:6px">Avec ce code, tu verras tes devoirs et tes notes.</p>`;
  } else if(mode==='code'){
-  const lab={parent:['Code parent','Reçu par SMS ou auprès de l\'école','PAR-4100'],teacher:['Code de classe','Donné par la direction ou créé par toi','3EB-7390'],director:['Code établissement','Reçu à la création de l\'école','PIONNIERS']}[r];
+  const lab={parent:['Code parent','Donné par l\'enseignant ou l\'école','PAR-XXXXXXXX'],teacher:['Code enseignant','Donné par la direction, ou affiché quand vous avez créé votre classe','PROF-XXXXXXXX'],director:['Code direction','Affiché à la création de l\'établissement (dans Réglages)','DIR-XXXXXXXXXX']}[r];
   form=`<label class="f" for="cd">${lab[0]}</label><input class="input" id="cd" placeholder="${lab[2]}" value="${fv('cd')}" autocapitalize="characters"><p class="muted" style="margin-top:6px">${lab[1]}.</p>`;
  } else if(r==='parent'){
   form=`<p class="muted">Gratuit. Vous ajouterez votre enfant juste après.</p><label class="f" for="pnm">Votre nom</label><input class="input" id="pnm" placeholder="Ex. Aminata Ndiaye" value="${fv('pnm')}"><label class="f" for="ptel">Téléphone</label><input class="input" id="ptel" inputmode="tel" placeholder="77 000 00 00" value="${fv('ptel')}">`;
@@ -775,32 +868,50 @@ function viewLogin(){
   <label class="f" for="sfr">Mensualité (F CFA, facultatif)</label><input class="input" id="sfr" inputmode="numeric" placeholder="Ex. 10000" value="${fv('sfr')}"><label class="f" for="swv">Numéro Wave / Orange Money de l'école</label><input class="input" id="swv" inputmode="tel" placeholder="Pour recevoir les paiements" value="${fv('swv')}">`;
  }
  return `<header class="top"><button class="iconbtn" aria-label="Retour" onclick="S.role=null;S._form={};save();render()">${I('back')}</button><div class="who"><div class="sub">Sunu Jàng</div><div class="hello">${t(r)}</div></div></header>
- <main>${tabs}<div class="card">${form}<div class="spacer"></div><button class="btn block" onclick="keepForm();doLogin()">${mode==='new'&&r!=='student'?'Créer mon compte':t('start')}</button></div>
+ <main>${S._invite&&r==='parent'?`<div class="card" style="margin-bottom:12px;background:var(--baobab-soft);border-color:#BFDCCD"><b>Inscription à l'école ${esc(S._invite)}</b><div class="muted">Créez d'abord votre compte parent (gratuit), le formulaire d'inscription s'ouvrira ensuite.</div></div>`:''}${tabs}<div class="card">${form}<div class="spacer"></div><button class="btn block" onclick="keepForm();doLogin()">${mode==='new'&&r!=='student'?'Créer mon compte':t('start')}</button></div>
  <div class="card" style="margin-top:12px;background:var(--mango-soft);border-color:#F3D9A6"><div class="row"><div class="grow"><b>Découvrir sans compte</b><div class="muted" style="color:var(--ink-2)">Entre dans l'app avec des données d'exemple.</div></div><button class="btn small mango" onclick="demoLogin()">Démo</button></div></div></main>`;
 }
-function emptyData(school){return {school,classes:[],eleves:[],notes:[],absences:[],paiements:[],mois:['Oct','Nov','Déc','Janv','Févr','Mars','Avr','Mai','Juin'],devoirs:[],comportement:[],messages:[],sondages:[],annonces:[],inscriptions:[],resultats:[],codes:['JANG-2026']}}
-function addEleve(o){const e={id:o.classe+'-'+uid(),points:0,sexe:'F',codeParent:'PAR-'+Math.floor(5000+Math.random()*4000),...o};S.data.eleves.push(e);S.data.mois.forEach(m=>S.data.paiements.push({eleve:e.id,mois:m,paye:false,ref:''}));return e}
-function newClass(nom,niveau,prof,fil){const cy=levelOf(niveau).cycle;const c={id:'c'+uid(),nom,niveau,prof,fil,code:nom.replace(/\s/g,'').toUpperCase().slice(0,8)+'-'+Math.floor(1000+Math.random()*9000),bareme:cy==='elem'?10:20,
- matieres:subjectsFor(cy,fil).map(s=>[s,s==='Mathématiques'||s==='Français'||s==='Nahw'?3:isAr(s)?1:2])};S.data.classes.push(c);return c}
-function doLogin(){
+function emptyData(school){return {school,classes:[],eleves:[],notes:[],absences:[],paiements:[],mois:['Oct','Nov','Déc','Janv','Févr','Mars','Avr','Mai','Juin'],devoirs:[],comportement:[],messages:[],sondages:[],annonces:[],inscriptions:[],votes:[],resultats:[],codes:['JANG-2026']}}
+function addEleve(o){const c=S.data.classes.find(x=>x.id===o.classe);const e={id:'e'+uid(),points:0,sexe:'F',codeParent:S.live?'PAR-'+gen(8):'PAR-'+Math.floor(5000+Math.random()*4000),...o};if(c&&c._e)e._e=c._e;S.data.eleves.push(e);S.data.mois.forEach(m=>S.data.paiements.push({eleve:e.id,mois:m,paye:false,ref:'',_e:e._e}));return e}
+function newClass(nom,niveau,prof,fil,esp){const cy=levelOf(niveau).cycle;const pre=nom.normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^A-Za-z0-9]/g,'').toUpperCase().slice(0,6)||'CLASSE';
+ const c={id:'c'+uid(),nom,niveau,prof,fil,code:pre+'-'+(S.live?gen(5):Math.floor(1000+Math.random()*9000)),bareme:cy==='elem'?10:20,
+ matieres:subjectsFor(cy,fil).map(s=>[s,s==='Mathématiques'||s==='Français'||s==='Nahw'?3:isAr(s)?1:2])};
+ if(S.live){c.cleProf='PROF-'+gen(8);c._e=esp||S.espace;if(S.role==='teacher'&&!S.keys.includes(c.cleProf))S.keys.push(c.cleProf)}
+ S.data.classes.push(c);return c}
+async function doLogin(){
  const r=S.role,mode=r==='student'?'new':(S.loginMode||'new');const F=k=>((S._form||{})[k]||'').trim();
- if(r==='student'){const p=F('pn');if(!p)return toast('Écris ton prénom pour continuer','x');S.student.prenom=p;const cc=F('cc').toUpperCase();
-  if(cc){const c=S.data.classes.find(x=>x.code===cc);if(!c)return toast('Code de classe introuvable. Vérifie avec ton enseignant.','x');S.student.classe=c.id;S.student.niveau=c.niveau;if(c.fil)S.student.fil=c.fil}
-  S.user={prenom:p,sub:'Élève · '+S.student.niveau+(S.student.fil==='fa'?' · franco-arabe':'')};}
- else if(mode==='code'){const cd=F('cd').toUpperCase();if(!cd)return toast('Entre ton code pour continuer','x');
-  if(r==='parent'){const kids=S.data.eleves.filter(e=>e.codeParent===cd);if(!kids.length)return toast('Ce code parent n\'existe pas. Créez plutôt un compte.','x');S.user={prenom:'Parent',sub:'Parent · '+kids.map(k=>k.nom.split(' ')[0]).join(', '),kids:kids.map(k=>k.id),kid:kids[0].id,pending:[]}}
-  if(r==='teacher'){const c=S.data.classes.find(x=>x.code===cd);if(!c)return toast('Code de classe inconnu.','x');S.user={prenom:c.prof,sub:'Enseignant · '+S.data.school.nom,classes:S.data.classes.filter(x=>x.prof===c.prof).map(x=>x.id),cls:c.id}}
-  if(r==='director'){if(cd!==S.data.school.code)return toast('Code établissement inconnu.','x');S.user={prenom:S.data.school.directeur,sub:'Direction · '+S.data.school.nom}}}
- else if(r==='parent'){const n=F('pnm');if(!n||!F('ptel'))return toast('Indiquez votre nom et votre téléphone','x');S.user={prenom:n.split(' ')[0],sub:'Parent',kids:[],kid:null,pending:[],tel:F('ptel')}}
- else if(r==='teacher'){const n=F('tnm'),cl=F('tcl');if(!n||!cl)return toast('Indiquez votre nom et le nom de la classe','x');const c=newClass(cl,F('tlv')||'CM2',n,S._tmp.fil);S.user={prenom:n,sub:'Enseignant · classe '+c.nom,classes:[c.id],cls:c.id};setTimeout(()=>toast('Classe créée · code '+c.code),50)}
- else {const n=F('snm'),d=F('sdr');if(!n||!d)return toast('Indiquez le nom de l\'école et du directeur','x');
-  const code=n.replace(/[^A-Za-zÀ-ÿ]/g,'').normalize('NFD').replace(/[̀-ͯ]/g,'').toUpperCase().slice(0,8)+Math.floor(10+Math.random()*89);
-  S.data=emptyData({code,nom:n,ville:F('svl'),directeur:d,tel:F('stl'),wave:F('swv')||'—',om:F('swv')||'—',frais:parseInt(F('sfr'))||0,periode:'semestre'});
-  S.user={prenom:d,sub:'Direction · '+n};setTimeout(()=>toast('École créée · code '+code),50)}
- S._form={};S.tab='home';S.view=null;save();render();
+ const fresh=()=>{S.live=true;S.keys=[];S.kinfo=[];S._sync={};S.espace=null;S.data=emptyData(BLANK_SCHOOL())};
+ const offline=()=>navigator.onLine===false&&(toast('Connexion internet nécessaire pour créer ou ouvrir un compte','x'),true);
+ const done=(msg)=>{S._form={};S.tab='home';S.view=null;buildUser();save();render();if(msg)setTimeout(()=>toast(msg),60);if(S._invite&&r==='parent')setTimeout(()=>sheetAddKid('inscr'),300)};
+ wait(true);
+ try{
+ if(r==='student'){const p=F('pn');if(!p)return toast('Écris ton prénom pour continuer','x');const cc=F('cc').toUpperCase();
+  const lv=S.student.niveau,fl=S.student.fil;fresh();S.student=NEW_STUDENT();S.student.prenom=p;S.student.niveau=lv;S.student.fil=fl;S.user={prenom:p,sub:''};
+  if(cc){if(offline())return;const k=await addKey(cc);if(!k||k.role!=='student'){S.keys=[];toast('Code de classe introuvable. Vérifie avec ton enseignant.','x');S.user=null;return}
+   const c=S.data.classes.find(x=>x.id===k.classe);if(c){S.student.niveau=c.niveau;if(c.fil)S.student.fil=c.fil}}
+  return done()}
+ if(offline())return;
+ if(mode==='code'){const cd=F('cd').toUpperCase();if(!cd)return toast('Entre ton code pour continuer','x');
+  fresh();const k=await addKey(cd);
+  const want={parent:'parent',teacher:'teacher',director:'director'}[r];
+  if(!k||(k.role!==want&&!(r==='teacher'&&k.role==='director'))){S.live=false;S.keys=[];toast(k?'Ce code n\'est pas un code '+({parent:'parent',teacher:'enseignant',director:'direction'}[r])+'.':'Code inconnu. Vérifiez qu\'il est bien recopié.','x');return}
+  S.user={prenom:r==='parent'?'Parent':r==='director'?(S.data.school.directeur||'Direction'):(S.data.classes.find(c=>c.id===k.classe)||{}).prof||'Enseignant'};
+  return done('Bienvenue sur Sunu Jàng')}
+ if(r==='parent'){const n=F('pnm');if(!n||!F('ptel'))return toast('Indiquez votre nom et votre téléphone','x');fresh();S.user={prenom:n.split(' ')[0],nom:n,sub:'Parent',kids:[],kid:null,pending:[],tel:F('ptel')};return done()}
+ if(r==='teacher'){const n=F('tnm'),cl=F('tcl');if(!n||!cl)return toast('Indiquez votre nom et le nom de la classe','x');fresh();
+  const res=await api('sj_create_espace',{p_school:{nom:'Classe de '+n,directeur:n,tel:F('ttel'),ville:'',wave:'—',om:'—',frais:0,periode:'semestre',independant:true},p_prefix:n});
+  S.keys=[res.cle_direction];S.espace=res.espace;S.user={prenom:n,classes:[],cls:null};
+  const c=newClass(cl,F('tlv')||'CM2',n,S._tmp.fil,res.espace);S.user.classes=[c.id];S.user.cls=c.id;
+  await pullNow({force:true});return done('Classe créée · code élèves '+c.code)}
+ const n=F('snm'),d=F('sdr');if(!n||!d)return toast('Indiquez le nom de l\'école et du directeur','x');fresh();
+ const res=await api('sj_create_espace',{p_school:{nom:n,ville:F('svl'),directeur:d,tel:F('stl'),wave:F('swv')||'—',om:F('swv')||'—',frais:parseInt(F('sfr'))||0,periode:'semestre'},p_prefix:n});
+ S.keys=[res.cle_direction];S.espace=res.espace;S.user={prenom:d};await pullNow({force:true});
+ done();setTimeout(()=>sheetCodes(true),200);
+ }catch(e){toast('Problème de connexion au serveur. Réessaie dans un instant.','x')}
+ finally{wait(false)}
 }
 function demoLogin(){
- const r=S.role;if(S.data.school.code!=='PIONNIERS'||!S.data.classes.find(c=>c.id==='c3'))S.data=seedData();S.student.fil='classique';
+ const r=S.role;S.live=false;S.keys=[];S.kinfo=[];S._sync={};S.espace=null;if(S.data.school.code!=='PIONNIERS'||!S.data.classes.find(c=>c.id==='c3'))S.data=seedData();S.student=NEW_STUDENT();S.student.streak=4;S.student.points=620;S.student.today=1;S.student.fil='classique';
  if(r==='student'){S.student.prenom='Abdou';S.student.niveau='3e';S.student.classe='c2';S.user={prenom:'Abdou',sub:'Élève · 3e B · '+S.data.school.nom,eleve:'c2-0'}}
  if(r==='parent'){S.user={prenom:'Famille Diallo',sub:'Parent de Abdou et Fatou',kids:['c2-0','c1-0'],kid:'c2-0',pending:[]}}
  if(r==='teacher'){S.user={prenom:'M. Sarr',sub:'Enseignant · '+S.data.school.nom,classes:['c2','c1','c3'],cls:'c2'}}
@@ -822,18 +933,35 @@ function sheetSettings(){
  <label class="f">Contraste élevé</label><div class="seg"><button class="${!S.contrast?'on':''}" onclick="S.contrast=false;save();render();sheetSettings()">Normal</button><button class="${S.contrast?'on':''}" onclick="S.contrast=true;save();render();sheetSettings()">Élevé (plein soleil)</button></div>
  <label class="f">Économie de données</label><div class="seg"><button class="${!S.saver?'on':''}" onclick="S.saver=false;save();sheetSettings()">Désactivée</button><button class="${S.saver?'on':''}" onclick="S.saver=true;save();sheetSettings()">Activée</button></div>
  <p class="muted" style="margin-top:6px">Activée : pas d'images lourdes, cours enregistrés pour être lus sans internet.</p>
- <div class="spacer"></div><div class="btns"><button class="btn ghost" onclick="closeSheet();S.user=null;S.view=null;save();render()">${I('logout')}Changer de compte</button><button class="btn danger" onclick="closeSheet();localStorage.removeItem('sunujang2');S=DEF();render()">Réinitialiser la démo</button></div>`);
+ ${S.live&&S.keys.length?`<div class="spacer"></div><button class="btn ghost block" onclick="sheetCodes()">${I('key',20)}Mes codes de connexion</button>`:''}
+ <div class="spacer"></div><div class="btns"><button class="btn ghost" onclick="logout()">${I('logout')}${S.live?'Se déconnecter':'Quitter la démo'}</button>${S.live?'':`<button class="btn danger" onclick="closeSheet();localStorage.removeItem('sunujang2');S=DEF();render()">Réinitialiser la démo</button>`}</div>`);
 }
+const ROLE_LBL={director:'Direction (ne pas partager)',teacher:'Enseignant',parent:'Parent',student:'Élève (code de classe)',inscription:'Demande d\'inscription'};
+function sheetCodes(first){
+ const ks=S.kinfo.filter(k=>S.keys.includes(k.cle));
+ const name=k=>k.role==='teacher'||k.role==='student'?((S.data.classes.find(c=>c.id===k.classe)||{}).nom||''):k.role==='parent'?((S.data.eleves.find(e=>e.id===k.eleve)||{}).nom||''):k.role==='director'?(S.data.school.nom||''):'';
+ const pub=S.espace&&S.codes&&S.codes[S.espace];
+ sheet(`<h3>${first?'Votre établissement est créé':'Mes codes de connexion'}</h3><p class="muted">Ces codes sont votre compte : notez-les (photo ou papier). Ils permettent de vous reconnecter sur un autre téléphone.</p>
+ <div class="list" style="margin-top:12px">${ks.map(k=>`<div class="item"><div class="av">${I('key',18)}</div><div class="grow"><div class="t" style="font-family:var(--display);letter-spacing:.04em">${esc(k.cle)}</div><div class="muted">${esc(ROLE_LBL[k.role]||k.role)}${name(k)?' · '+esc(name(k)):''}</div></div><button class="iconbtn" aria-label="Copier" onclick="copyTxt('${esc(k.cle)}')">${I('copy',18)}</button></div>`).join('')}</div>
+ ${pub&&S.role==='director'?`<div class="card" style="margin-top:12px;background:var(--baobab-soft);border-color:#BFDCCD"><b>Code de l'établissement : ${esc(pub)}</b><p class="muted">Celui-là, vous pouvez le partager : les parents l'utilisent pour inscrire leur enfant.</p></div>`:''}
+ <div class="spacer"></div><button class="btn block" onclick="copyTxt(${esc(JSON.stringify('Mes codes Sunu Jàng :\n'+ks.map(k=>k.cle+' ('+(ROLE_LBL[k.role]||k.role)+')').join('\n')))})">${I('copy',20)}Tout copier</button>`)}
+function doLogout(){closeSheet();const keep={lang:S.lang,fs:S.fs,contrast:S.contrast,saver:S.saver};S=Object.assign(DEF(),keep);save();render()}
+function logout(){
+ if(!S.live)return doLogout();
+ const p=pendingCount();
+ sheet(`<h3>Se déconnecter ?</h3><p class="muted">Pour revenir, il vous faudra vos codes de connexion.${p?' <b style="color:var(--bad)">'+p+' modification(s) ne sont pas encore envoyées</b> : reconnectez-vous à internet avant de partir.':''}</p>
+ <div class="spacer"></div><div class="btns"><button class="btn ghost" onclick="sheetCodes()">${I('key',20)}Voir mes codes</button><button class="btn danger" onclick="doLogout()">Se déconnecter</button></div>`)}
 function sheetNotifs(){
  const items=S.role==='director'?[['Nouvelle inscription : '+S.data.inscriptions.filter(i=>i.statut==='en_attente').length+' en attente','Inscriptions'],['Paiements de novembre : relances à faire','Paiements']]
  :S.role==='teacher'?[['Appel du jour à faire','Appel'],['Un parent vous a écrit','Messages']]
- :S.role==='parent'?[['Nouvelle note de mathématiques','Notes'],['Paiement de novembre à régler','Paiements'],[S.data.annonces[0].titre,'École']]
+ :S.role==='parent'?[['Nouvelle note de mathématiques','Notes'],['Paiement de novembre à régler','Paiements'],[(S.data.annonces[0]||{titre:'Pas de nouvelle annonce'}).titre,'École']]
  :[['Nouveau devoir : '+(S.data.devoirs.find(d=>d.classe===S.student.classe)||{titre:'—'}).titre,'Devoirs'],['Défi du jour disponible','Quiz'],['Tu es à '+S.student.streak+' jours de suite !','Série']];
  sheet(`<h3>Notifications</h3><div class="list" style="margin-top:12px">${items.map(([a,b])=>`<div class="item"><div class="av" style="background:var(--mango-soft);color:var(--warn)">${I('bell',18)}</div><div class="grow"><div class="t">${esc(a)}</div><div class="muted">${esc(b)}</div></div></div>`).join('')}</div>
  <p class="muted" style="margin-top:12px">Les parents sans smartphone reçoivent aussi l'essentiel par SMS.</p>`);
 }
 
 // ============ ÉLÈVE ============
+function actDone(){dayTick();const st=S.student;st.today++;if(st.today===st.goal)st.streak++}
 function stCycle(){return levelOf(S.student.niveau).cycle}
 function stHome(){
  const st=S.student,cy=stCycle(),lvl=levelOf(st.niveau);
@@ -844,32 +972,39 @@ function stHome(){
  return `<section class="hero">${WAX()}<div class="row" style="align-items:flex-start"><div class="grow"><h2>Objectif du jour : ${st.goal} activités</h2><p>${st.today>=st.goal?'Bravo, objectif atteint ! Continue sur ta lancée.':'Encore '+(st.goal-st.today)+' pour garder ta série.'}</p></div><div class="ring" style="--p:${pct}"><span>${st.today}/${st.goal}</span></div></div>
  <div class="stats"><div class="stat"><b>${st.streak} j</b><span>Série</span></div><div class="stat"><b>${st.points}</b><span>Points</span></div><div class="stat"><b>${Object.keys(st.done).length}</b><span>Leçons lues</span></div></div>
  <button class="btn" onclick="startQuiz('${cy}','__defi',3)">${I('flame',20)}Défi du jour · 3 questions</button></section>
- ${cs?`<div class="sec-title">Reprendre</div><button class="card row" style="width:100%;text-align:left" onclick="open('lesson',{cy:'${cy}',s:'${cs}',i:${ci}})">${mono(cs)}<div class="grow"><div class="t" style="font-weight:700">${chTitle(CHAPTERS[chKey(cy,cs)][ci])}</div><div class="muted">${cs} · ${LESSONS[cont].dur} min de lecture</div><div class="bar"><i style="width:${st.done[cont]?100:35}%"></i></div></div>${I('chev',18)}</button>`:''}
- ${dv.length?`<div class="sec-title">Mes devoirs <small>${S.data.classes.find(c=>c.id===st.classe).nom}</small></div><div class="list">${dv.slice(0,3).map(d=>`<div class="item">${mono(d.matiere,40)}<div class="grow"><div class="t">${esc(d.titre)}</div><div class="muted">Pour le ${dLabel(d.limite)}</div></div></div>`).join('')}</div>`:
+ ${cs?`<div class="sec-title">Reprendre</div><button class="card row" style="width:100%;text-align:left" onclick="openV('lesson',{cy:'${cy}',s:'${cs}',i:${ci}})">${mono(cs)}<div class="grow"><div class="t" style="font-weight:700">${chTitle(CHAPTERS[chKey(cy,cs)][ci])}</div><div class="muted">${cs} · ${LESSONS[cont].dur} min de lecture</div><div class="bar"><i style="width:${st.done[cont]?100:35}%"></i></div></div>${I('chev',18)}</button>`:''}
+ ${dv.length?`<div class="sec-title">Mes devoirs <small>${esc((S.data.classes.find(c=>c.id===st.classe)||{}).nom||'')}</small></div><div class="list">${dv.slice(0,3).map(d=>`<div class="item">${mono(d.matiere,40)}<div class="grow"><div class="t">${esc(d.titre)}</div><div class="muted">Pour le ${dLabel(d.limite)}</div></div></div>`).join('')}</div>`:
   `<div class="sec-title">Ma classe</div><div class="card"><b>Relie ton compte à ta classe</b><p class="muted">Avec le code de ton enseignant, tu verras tes devoirs et tes notes ici.</p><div class="spacer"></div><button class="btn small ghost" onclick="sheetJoin()">Entrer un code</button></div>`}
  <div class="sec-title">Matières <small>${lvl.id} · ${CYCLE_NAME[cy]}</small></div>
- <div class="grid2">${(st.fil==='fa'?subs.filter(isAr).slice(0,4):subs.slice(0,4)).map(s=>`<button class="tile" onclick="open('subject',{s:'${esc(s)}'})">${mono(s)}<div class="t">${subjLabel(s)}</div><span class="muted">${(CHAPTERS[chKey(cy,s)]||[]).length} chapitres</span></button>`).join('')}</div>
+ <div class="grid2">${(st.fil==='fa'?subs.filter(isAr).slice(0,4):subs.slice(0,4)).map(s=>`<button class="tile" onclick="openV('subject',{s:'${esc(s)}'})">${mono(s)}<div class="t">${subjLabel(s)}</div><span class="muted">${(CHAPTERS[chKey(cy,s)]||[]).length} chapitres</span></button>`).join('')}</div>
  ${mates.length?`<div class="sec-title">Classement de la semaine</div><div class="list">${mates.map((m,i)=>`<div class="item"><div class="av" style="${i===0?'background:var(--mango);color:var(--ink)':''}">${i+1}</div><div class="grow"><div class="t">${esc(m.nom)}${m.id===S.user.eleve?' (toi)':''}</div></div><span class="badge">${m.points} pts</span></div>`).join('')}</div>`:''}`;
 }
-function sheetJoin(){sheet(`<h3>Rejoindre ma classe</h3><label class="f" for="jc">Code de classe</label><input class="input" id="jc" placeholder="Ex. 3EB-7390"><div class="spacer"></div><button class="btn block" onclick="const c=S.data.classes.find(x=>x.code===$('#jc').value.trim().toUpperCase());if(!c)return toast('Code introuvable','x');S.student.classe=c.id;S.student.niveau=c.niveau;S.user.sub='Élève · '+c.nom;save();closeSheet();render();toast('Bienvenue en '+c.nom)">Rejoindre</button>`)}
+function sheetJoin(){sheet(`<h3>Rejoindre ma classe</h3><label class="f" for="jc">Code de classe</label><input class="input" id="jc" placeholder="Ex. CM2A-7KX3P" autocapitalize="characters"><div class="spacer"></div><button class="btn block" onclick="joinClass($('#jc').value)">Rejoindre</button>`)}
+async function joinClass(v){const code=String(v||'').trim().toUpperCase();if(!code)return toast('Entre le code','x');
+ if(!S.live){const c=S.data.classes.find(x=>x.code===code);if(!c)return toast('Code introuvable','x');S.student.classe=c.id;S.student.niveau=c.niveau;S.user.sub='Élève · '+c.nom;save();closeSheet();render();return toast('Bienvenue en '+c.nom)}
+ wait(true);const old=S.keys.filter(k=>(S.kinfo.find(i=>i.cle===k)||{}).role==='student');
+ const k=await addKey(code);wait(false);
+ if(!k||k.role!=='student'){S.keys=S.keys.filter(x=>x!==code||old.includes(x));return toast('Code introuvable. Vérifie avec ton enseignant.','x')}
+ S.keys=S.keys.filter(x=>x===code||!old.includes(x));await pullNow({force:true}).catch(()=>{});
+ const c=S.data.classes.find(x=>x.id===k.classe);if(c){S.student.niveau=c.niveau;if(c.fil)S.student.fil=c.fil}buildUser();save();closeSheet();render();toast('Bienvenue en '+(c?c.nom:'classe'))}
 function stCourses(){
  const cy=stCycle();const sel=S.student.niveau;
  return `<div class="sec-title" style="margin-top:6px">Cours <small>Programme officiel sénégalais</small></div>
  <div class="chips">${LEVELS.map(l=>`<button class="chip ${sel===l.id?'on':''}" onclick="S.student.niveau='${l.id}';save();render()">${l.id}</button>`).join('')}</div>
- <div class="spacer"></div><div class="tabs2" role="group" aria-label="Filière"><button class="${S.student.fil!=='fa'?'on':''}" onclick="S.student.fil='classique';save();render()">Classique</button><button class="${S.student.fil==='fa'?'on':''}" onclick="S.student.fil='fa';save();render()">Franco-arabe <span lang="ar" class="ar">عربي</span></button></div><div class="list">${subjectsFor(cy,S.student.fil).map(s=>{const n=(CHAPTERS[chKey(cy,s)]||[]).length;return `<button class="item" onclick="open('subject',{s:'${esc(s)}'})">${mono(s)}<div class="grow"><div class="t">${subjLabel(s)}</div><div class="muted">${isAr(s)?esc(AR_SUBJ[s][0])+' · ':''}${n} chapitres · quiz inclus</div></div>${I('chev',18)}</button>`}).join('')}</div>`;
+ <div class="spacer"></div><div class="tabs2" role="group" aria-label="Filière"><button class="${S.student.fil!=='fa'?'on':''}" onclick="S.student.fil='classique';save();render()">Classique</button><button class="${S.student.fil==='fa'?'on':''}" onclick="S.student.fil='fa';save();render()">Franco-arabe <span lang="ar" class="ar">عربي</span></button></div><div class="list">${subjectsFor(cy,S.student.fil).map(s=>{const n=(CHAPTERS[chKey(cy,s)]||[]).length;return `<button class="item" onclick="openV('subject',{s:'${esc(s)}'})">${mono(s)}<div class="grow"><div class="t">${subjLabel(s)}</div><div class="muted">${isAr(s)?esc(AR_SUBJ[s][0])+' · ':''}${n} chapitres · quiz inclus</div></div>${I('chev',18)}</button>`}).join('')}</div>`;
 }
 VIEWS={};
 VIEWS.subject=v=>{
  const cy=stCycle();const ch=CHAPTERS[chKey(cy,v.s)]||[];
  return backbar(v.s,isAr(v.s)?AR_SUBJ[v.s][0]+' · '+AR_SUBJ[v.s][1]:S.student.niveau+' · '+CYCLE_NAME[cy])+`<div class="card row" style="background:var(--baobab);color:#fff;border:0">${mono(v.s)}<div class="grow"><b>Teste-toi en ${esc(v.s)}</b><div style="opacity:.85;font-size:.9rem">Quiz de 5 questions corrigées</div></div><button class="btn small mango" onclick="startQuiz('${cy}','${esc(v.s)}',5)">Go</button></div>
- <div class="sec-title">Chapitres</div><div class="list">${ch.map((c,i)=>{const k=chKey(cy,v.s)+'|'+i;const has=!!LESSONS[k];return `<button class="item" onclick="open('lesson',{cy:'${cy}',s:'${esc(v.s)}',i:${i}})"><div class="av" style="${S.student.done[k]?'background:var(--ok);color:#fff':''}">${S.student.done[k]?I('check',18):i+1}</div><div class="grow"><div class="t">${chTitle(c)}</div><div class="muted">${has?LESSONS[k].dur+' min · leçon + exemples':'Résumé à venir'}</div></div>${I('chev',18)}</button>`}).join('')}</div>`;
+ <div class="sec-title">Chapitres</div><div class="list">${ch.map((c,i)=>{const k=chKey(cy,v.s)+'|'+i;const has=!!LESSONS[k];return `<button class="item" onclick="openV('lesson',{cy:'${cy}',s:'${esc(v.s)}',i:${i}})"><div class="av" style="${S.student.done[k]?'background:var(--ok);color:#fff':''}">${S.student.done[k]?I('check',18):i+1}</div><div class="grow"><div class="t">${chTitle(c)}</div><div class="muted">${has?LESSONS[k].dur+' min · leçon + exemples':'Résumé à venir'}</div></div>${I('chev',18)}</button>`}).join('')}</div>`;
 };
 VIEWS.lesson=v=>{
  const k=chKey(v.cy,v.s)+'|'+v.i;const L=LESSONS[k];const title=CHAPTERS[chKey(v.cy,v.s)][v.i];
  const body=L?L.html:`<p>Le contenu complet de ce chapitre est en cours de rédaction par l'équipe pédagogique.</p><div class="box">En attendant, entraîne-toi avec le quiz de ${esc(v.s)} : il couvre les notions principales de ton niveau.</div>`;
  return backbar(title.includes(' · ')?title.split(' · ')[1]:title,title.includes(' · ')?title.split(' · ')[0]:v.s)+`<div class="row" style="margin:4px 0 6px"><button class="speak" onclick="speak(document.querySelector('.lesson').innerText)">${I('volume')}${t('listen')}</button><span class="muted">${L?L.dur+' min':''}</span></div>
  <article class="card lesson">${body}</article><div class="spacer"></div>
- <div class="btns"><button class="btn" onclick="S.student.done['${k}']=1;S.student.points+=10;S.student.today++;save();toast('Leçon terminée : +10 points');back()">${I('check',20)}J'ai compris</button><button class="btn ghost" onclick="startQuiz('${v.cy}','${esc(v.s)}',5)">Faire le quiz</button></div>`;
+ <div class="btns"><button class="btn" onclick="S.student.done['${k}']=1;S.student.points+=10;actDone();save();toast('Leçon terminée : +10 points');back()">${I('check',20)}J'ai compris</button><button class="btn ghost" onclick="startQuiz('${v.cy}','${esc(v.s)}',5)">Faire le quiz</button></div>`;
 };
 function stQuizHome(){
  const cy=stCycle();
@@ -903,17 +1038,22 @@ VIEWS.quiz=v=>{
  </main>`;
 };
 function answer(i){const v=S.view;v.picked=i;const q=v.qs[v.i];q.ok=i===q.a;if(q.ok)v.score++;render()}
-function nextQ(){const v=S.view;v.i++;v.picked=null;if(v.i>=v.qs.length){S.student.points+=v.score*10;S.student.today++;S.data.resultats.push({matiere:v.label,score:v.score,total:v.qs.length,pct:Math.round(v.score/v.qs.length*100),date:new Date().toLocaleDateString('fr-FR')});if(S.user.eleve){const e=S.data.eleves.find(x=>x.id===S.user.eleve);e&&(e.points+=v.score*10)}save()}render();scrollTo(0,0)}
+function nextQ(){const v=S.view;v.i++;v.picked=null;if(v.i>=v.qs.length){S.student.points+=v.score*10;actDone();S.data.resultats.push({matiere:v.label,score:v.score,total:v.qs.length,pct:Math.round(v.score/v.qs.length*100),date:new Date().toLocaleDateString('fr-FR')});if(S.user.eleve){const e=S.data.eleves.find(x=>x.id===S.user.eleve);e&&(e.points+=v.score*10)}save()}render();scrollTo(0,0)}
 function stExams(){
  const lvl=levelOf(S.student.niveau);const prem=S.student.premium;
  const order=lvl.exam?[lvl.exam,...Object.keys(EXAMS).filter(x=>x!==lvl.exam)]:Object.keys(EXAMS);
  return `<div class="sec-title" style="margin-top:6px">Examens <small>Annales et sujets corrigés</small></div>
  ${!prem?`<div class="card" style="background:var(--bissap);color:#fff;border:0"><div class="row"><div class="grow"><b style="font-family:var(--display);font-size:1.2rem">Pack Examens</b><p style="opacity:.9;font-size:.92rem;margin-top:4px">Sujets corrigés pas à pas, examens blancs chronométrés, fiches de révision.</p></div>${I('lock',30)}</div><div class="spacer"></div><div class="btns"><button class="btn mango small" onclick="sheetUnlock()">J'ai un code</button><button class="btn small" style="background:rgba(255,255,255,.15)" onclick="sheetBuy()">Acheter · 2 000 F</button></div></div>`:
   `<div class="card row" style="background:var(--baobab-soft);border-color:#BFDCCD">${I('check')}<div class="grow"><b>Pack Examens activé</b><div class="muted">Tous les sujets sont débloqués.</div></div></div>`}
- ${order.map(x=>{const E=EXAMS[x];return `<div class="sec-title">${E.name} <small>${E.full}</small></div><div class="list">${[2025,2024,2023,2022].map((y,j)=>`<button class="item" onclick="${prem||j===0?`open('exam',{x:'${x}',y:${y}})`:`sheetUnlock()`}"><div class="mono" style="background:var(--ink)">${String(y).slice(2)}</div><div class="grow"><div class="t">${E.name} ${y}</div><div class="muted">${E.subjects.length} épreuves${j===0?' · gratuit':''}</div></div>${prem||j===0?I('chev',18):`<span class="badge lock">${I('lock',14)}</span>`}</button>`).join('')}</div>`}).join('')}`;
+ ${order.map(x=>{const E=EXAMS[x];return `<div class="sec-title">${E.name} <small>${E.full}</small></div><div class="list">${[2025,2024,2023,2022].map((y,j)=>`<button class="item" onclick="${prem||j===0?`openV('exam',{x:'${x}',y:${y}})`:`sheetUnlock()`}"><div class="mono" style="background:var(--ink)">${String(y).slice(2)}</div><div class="grow"><div class="t">${E.name} ${y}</div><div class="muted">${E.subjects.length} épreuves${j===0?' · gratuit':''}</div></div>${prem||j===0?I('chev',18):`<span class="badge lock">${I('lock',14)}</span>`}</button>`).join('')}</div>`}).join('')}`;
 }
-function sheetUnlock(){sheet(`<h3>Débloquer le Pack Examens</h3><p class="muted">Entre le code reçu de ton école ou après ton paiement.</p><label class="f" for="uc">Code d'activation</label><input class="input" id="uc" placeholder="Ex. JANG-2026" autocapitalize="characters"><p class="muted" style="margin-top:6px">Démo : JANG-2026</p><div class="spacer"></div><button class="btn block" onclick="const c=$('#uc').value.trim().toUpperCase();if(!S.data.codes.includes(c))return toast('Code invalide ou déjà utilisé','x');S.data.codes=S.data.codes.filter(x=>x!==c);S.student.premium=true;save();closeSheet();render();toast('Pack Examens activé')">Activer</button>`)}
-function sheetBuy(){sheet(`<h3>Payer avec Wave ou Orange Money</h3><p class="muted">2 000 F CFA pour toute l'année scolaire.</p>
+function sheetUnlock(){sheet(`<h3>Débloquer le Pack Examens</h3><p class="muted">Entre le code reçu de ton école ou après ton paiement.</p><label class="f" for="uc">Code d'activation</label><input class="input" id="uc" placeholder="Ex. BFEM-XXXX" autocapitalize="characters">${S.live?'':'<p class="muted" style="margin-top:6px">Démo : JANG-2026</p>'}<div class="spacer"></div><button class="btn block" onclick="unlock($('#uc').value)">Activer</button>`)}
+async function unlock(v){const c=String(v||'').trim().toUpperCase();if(!c)return toast('Entre le code','x');
+ if(S.live){wait(true);let ok=false;try{ok=await api('sj_activer',{p_code:c})}catch(e){wait(false);return toast('Vérification impossible. Vérifie ta connexion.','x')}wait(false);if(!ok)return toast('Code invalide ou déjà utilisé','x')}
+ else{if(!S.data.codes.includes(c))return toast('Code invalide ou déjà utilisé','x');S.data.codes=S.data.codes.filter(x=>x!==c)}
+ S.student.premium=true;save();closeSheet();render();toast('Pack Examens activé')}
+function sheetBuy(){if(S.live)return sheet(`<h3>Obtenir le Pack Examens</h3><p class="muted">2 000 F CFA pour toute l'année scolaire. Écris-nous sur WhatsApp : on t'explique comment payer par Wave ou Orange Money et tu reçois ton code d'activation.</p><div class="spacer"></div><a class="btn block" href="https://wa.me/393896163650?text=${encodeURIComponent('Bonjour, je veux le Pack Examens Sunu Jàng ('+S.student.niveau+').')}" target="_blank" rel="noopener">${I('msg',20)}Écrire sur WhatsApp</a><div class="spacer"></div><button class="btn ghost block" onclick="sheetUnlock()">J'ai déjà un code</button>`);
+ sheet(`<h3>Payer avec Wave ou Orange Money</h3><p class="muted">2 000 F CFA pour toute l'année scolaire.</p>
  <div class="list" style="margin-top:12px"><div class="item"><div class="mono" style="background:#1DC3F0">W</div><div class="grow"><div class="t">Wave</div><div class="muted">Envoie 2 000 F au 77 123 45 67</div></div></div><div class="item"><div class="mono" style="background:#FF7900">OM</div><div class="grow"><div class="t">Orange Money</div><div class="muted">Envoie 2 000 F au 78 123 45 67</div></div></div></div>
  <label class="f" for="rf">Référence de la transaction</label><input class="input" id="rf" placeholder="Ex. WV-88213"><div class="spacer"></div><button class="btn block" onclick="if(!$('#rf').value.trim())return toast('Ajoute la référence du paiement','x');closeSheet();toast('Paiement envoyé pour vérification. Tu recevras ton code par SMS.')">Envoyer la référence</button>`)}
 VIEWS.exam=v=>{const E=EXAMS[v.x];return backbar(E.name+' '+v.y,E.full)+`<div class="list">${E.subjects.map(s=>`<button class="item" onclick="startQuiz('${v.x==='CFEE'?'elem':v.x==='BFEM'?'moyen':'lycee'}','${esc(s)}',6)">${mono(s)}<div class="grow"><div class="t">${esc(s)}</div><div class="muted">Sujet + corrigé détaillé · mode chrono</div></div>${I('chev',18)}</button>`).join('')}</div><p class="muted" style="margin-top:12px">Dans cette démo, chaque épreuve ouvre un quiz d'entraînement de la matière.</p>`};
@@ -943,9 +1083,11 @@ function paHome(){
  <button class="btn" onclick="speak(${esc(JSON.stringify(summary))})">${I('volume',20)}Écouter le résumé</button></section>
  ${dueNow.length?`<div class="card row" style="margin-top:12px;border-color:var(--mango);background:var(--mango-soft)">${I('wallet')}<div class="grow"><b>Mensualité de ${dueNow.map(p=>p.mois).join(', ')} à régler</b><div class="muted" style="color:var(--ink-2)">${fcfa(S.data.school.frais*dueNow.length)}</div></div><button class="btn small" onclick="go('pay')">Payer</button></div>`:''}
  <div class="sec-title">Dernières notes <button class="link" onclick="go('notes')">Tout voir</button></div><div class="list">${lastNotes.map(n=>`<div class="item">${mono(n.matiere,38)}<div class="grow"><div class="t">${esc(n.matiere)}</div><div class="muted">${n.type==='compo'?'Composition':'Devoir'} · ${dLabel(n.date)}</div></div><b style="color:${n.note/b.c.bareme>=.5?'var(--ok)':'var(--bad)'}">${fmt(n.note,1)}/${b.c.bareme}</b></div>`).join('')}</div>
- ${sd?`<div class="sec-title">Question de l'école</div><div class="card"><b>${esc(sd.question)}</b><div class="spacer"></div>${sd.maReponse?`<span class="badge ok">Vous avez répondu : ${sd.maReponse.replace('_',' ')}</span>`:`<div class="btns">${[['oui','Oui'],['non','Non'],['peut_etre','Peut-être']].map(([k,l])=>`<button class="btn small ${k==='oui'?'':'ghost'}" onclick="vote('${sd.id}','${k}')">${l}</button>`).join('')}</div>`}</div>`:''}`;
+ ${sd?`<div class="sec-title">Question de l'école</div><div class="card"><b>${esc(sd.question)}</b><div class="spacer"></div>${maRep(sd,e.id)?`<span class="badge ok">Vous avez répondu : ${maRep(sd,e.id).replace('_',' ')}</span>`:`<div class="btns">${[['oui','Oui'],['non','Non'],['peut_etre','Peut-être']].map(([k,l])=>`<button class="btn small ${k==='oui'?'':'ghost'}" onclick="vote('${sd.id}','${k}')">${l}</button>`).join('')}</div>`}</div>`:''}`;
 }
-function vote(id,k){const s=S.data.sondages.find(x=>x.id===id);s.reponses[k]++;s.maReponse=k;save();render();toast('Réponse envoyée à l\'école')}
+function sdCount(s){const c={oui:0,non:0,peut_etre:0};if(s.reponses)for(const k in c)c[k]+=s.reponses[k]||0;for(const v of S.data.votes||[])if(v.sondage===s.id&&c[v.rep]!=null)c[v.rep]++;return c}
+function maRep(s,eid){const v=(S.data.votes||[]).find(v=>v.sondage===s.id&&v.eleve===eid);return v?v.rep:s.maReponse||null}
+function vote(id,k){const s=S.data.sondages.find(x=>x.id===id);const eid=S.user.kid;S.data.votes=S.data.votes||[];if(S.data.votes.some(v=>v.sondage===id&&v.eleve===eid))return;S.data.votes.push({id:id+'|'+eid,sondage:id,eleve:eid,rep:k,_e:s._e});save();render();toast('Réponse envoyée à l\'école')}
 function paNotes(){
  const e=kid();const b=bulletin(e.id);
  return kidSwitch()+`<div class="sec-title" style="margin-top:6px">Bulletin du semestre 1 <small>${b.c.nom}</small></div>
@@ -976,14 +1118,15 @@ function paPay(){
 function sheetPay(id,m){sheet(`<h3>Payer ${m}</h3><p class="muted">${fcfa(S.data.school.frais)} · envoyez par Wave (${S.data.school.wave}) ou Orange Money (${S.data.school.om}).</p>
  <label class="f" for="rf">Référence de la transaction</label><input class="input" id="rf" placeholder="Ex. WV-88213"><div class="spacer"></div>
  <button class="btn block" onclick="const r=$('#rf').value.trim();if(!r)return toast('Ajoutez la référence du paiement','x');const p=S.data.paiements.find(x=>x.eleve==='${id}'&&x.mois==='${m}');p.paye=true;p.ref=r;save();closeSheet();render();toast('Paiement de ${m} enregistré')">Confirmer le paiement</button>`)}
+function openThread(eid){let th=S.data.messages.find(m=>m.eleve===eid);if(!th){const e=S.data.eleves.find(x=>x.id===eid);const c=S.data.classes.find(x=>x.id===e.classe)||{};th={id:'th'+uid(),eleve:eid,avec:c.prof||'Enseignant',msgs:[],_e:e._e};S.data.messages.push(th)}openV('thread',{id:th.id,hideNav:true})}
 function paMsgs(){
- const ths=S.data.messages.filter(m=>S.user.kids.includes(m.eleve));
- return `<div class="sec-title" style="margin-top:6px">Messages <small>avec les enseignants</small></div><div class="list">${ths.map(th=>{const e=S.data.eleves.find(x=>x.id===th.eleve);const last=th.msgs[th.msgs.length-1];return `<button class="item" onclick="open('thread',{id:'${th.id}',hideNav:true})"><div class="av">${initials(th.avec.replace(/^(M\.|Mme) /,''))}</div><div class="grow"><div class="t">${esc(th.avec)}</div><div class="muted" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(e.nom.split(' ')[0])} · ${esc(last.txt)}</div></div><span class="muted">${last.d}</span></button>`}).join('')}</div>`;
+ const ths=S.data.messages.filter(m=>S.user.kids.includes(m.eleve)&&m.msgs.length);const e=kid();
+ return `<div class="sec-title" style="margin-top:6px">Messages <small>avec les enseignants</small></div><button class="btn block" onclick="openThread('${e.id}')">${I('msg',20)}Écrire à l'enseignant de ${esc(e.nom.split(' ')[0])}</button><div class="spacer"></div><div class="list">${ths.map(th=>{const e=S.data.eleves.find(x=>x.id===th.eleve);const last=th.msgs[th.msgs.length-1];return `<button class="item" onclick="openV('thread',{id:'${th.id}',hideNav:true})"><div class="av">${initials(th.avec.replace(/^(M\.|Mme) /,''))}</div><div class="grow"><div class="t">${esc(th.avec)}</div><div class="muted" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(e.nom.split(' ')[0])} · ${esc(last.txt)}</div></div><span class="muted">${esc(last.d)}</span></button>`}).join('')||'<div class="empty">Aucun message pour l\'instant.</div>'}</div>`;
 }
 VIEWS.thread=v=>{const th=S.data.messages.find(m=>m.id===v.id);const e=S.data.eleves.find(x=>x.id===th.eleve);const me=S.role==='teacher'?'them':'me';
- return backbar(S.role==='teacher'?'Parent de '+e.nom:th.avec,'À propos de '+e.nom)+`<div style="min-height:50vh">${th.msgs.map(m=>`<div class="bubble ${m.de===me?'me':'them'}">${esc(m.txt)}<small>${m.d}</small></div>`).join('')}</div>
+ return backbar(S.role==='teacher'?'Parent de '+e.nom:th.avec,'À propos de '+e.nom)+`<div style="min-height:50vh">${th.msgs.map(m=>`<div class="bubble ${m.de===me?'me':'them'}">${esc(m.txt)}<small>${esc(m.d)}</small></div>`).join('')||'<p class="muted" style="text-align:center;margin-top:30px">Écrivez votre premier message.</p>'}</div>
  <div class="row" style="position:sticky;bottom:12px;margin-top:16px"><input class="input grow" id="mt" placeholder="Écrire un message…" onkeydown="if(event.key==='Enter')sendMsg('${th.id}')"><button class="btn" aria-label="Envoyer" onclick="sendMsg('${th.id}')" style="width:52px;padding:0">${I('send',20)}</button></div>`};
-function sendMsg(id){const v=$('#mt').value.trim();if(!v)return;const th=S.data.messages.find(m=>m.id===id);th.msgs.push({de:S.role==='teacher'?'them':'me',txt:v,d:"aujourd'hui"});save();render();const m=$('#mt');m&&m.focus()}
+function sendMsg(id){const v=$('#mt').value.trim();if(!v)return;const th=S.data.messages.find(m=>m.id===id);th.msgs.push({id:uid(),de:S.role==='teacher'?'them':'me',txt:v,d:new Date().toLocaleDateString('fr-FR',{day:'numeric',month:'short'})});save();render();const m=$('#mt');m&&m.focus()}
 
 // ============ ENSEIGNANT ============
 function cls(){return S.data.classes.find(c=>c.id===S.user.cls)}
@@ -998,7 +1141,7 @@ function teHome(){
  <div class="stats"><div class="stat"><b>${fmt(cm)}</b><span>Moy. classe</span></div><div class="stat"><b>${Math.round(pres/(d.length||1)*100)} %</b><span>Présence</span></div><div class="stat"><b>${S.data.devoirs.filter(x=>x.classe===c.id).length}</b><span>Devoirs</span></div></div>
  <button class="btn" onclick="go('call')">${I('check',20)}${done?'Revoir l\'appel':'Faire l\'appel'}</button></section>
  <div class="sec-title">Actions rapides</div><div class="grid2">
- ${[['clip','Saisir des notes',"go('notes')"],['book','Donner un devoir',"sheetDevoir()"],['star','Noter le comportement',"open('behaviour')"],['msg','Messages parents',"open('teMsgs')"]].map(([ic,l,f])=>`<button class="tile" onclick="${f}"><div class="mono" style="background:var(--baobab-soft);color:var(--baobab)">${I(ic)}</div><div class="t">${l}</div></button>`).join('')}</div>
+ ${[['clip','Saisir des notes',"go('notes')"],['book','Donner un devoir',"sheetDevoir()"],['star','Noter le comportement',"openV('behaviour')"],['msg','Messages parents',"openV('teMsgs')"]].map(([ic,l,f])=>`<button class="tile" onclick="${f}"><div class="mono" style="background:var(--baobab-soft);color:var(--baobab)">${I(ic)}</div><div class="t">${l}</div></button>`).join('')}</div>
  ${weak.length?`<div class="sec-title">Élèves à accompagner <small>moyenne sous ${c.bareme/2}</small></div><div class="list">${weak.slice(0,4).map(x=>`<div class="item"><div class="av" style="background:#F8E0DD;color:var(--bad)">${initials(x.e.nom)}</div><div class="grow"><div class="t">${esc(x.e.nom)}</div></div><b style="color:var(--bad)">${fmt(x.m)}</b></div>`).join('')}</div>`:''}`;
 }
 function lastDay(){const ds=[...new Set(S.data.absences.map(a=>a.date))].sort();return ds[ds.length-1]}
@@ -1026,7 +1169,7 @@ function saveNotes(){const c=cls();const n=S._n;let k=0,bad=0;for(const [id,v] o
 function teBulletins(){
  const c=cls();const el=S.data.eleves.filter(e=>e.classe===c.id).map(e=>({e,m:moyGen(e.id)})).sort((a,b)=>(b.m??-1)-(a.m??-1));
  return clsSwitch()+`<div class="sec-title" style="margin-top:0">Bulletins · Semestre 1 <small>calcul automatique</small></div>
- <div class="list">${el.map((x,i)=>`<button class="item" onclick="open('bull',{id:'${x.e.id}'})"><div class="av" style="${i<3?'background:var(--mango);color:var(--ink)':''}">${i+1}</div><div class="grow"><div class="t">${esc(x.e.nom)}</div><div class="muted">${mention(x.m,c.bareme)}</div></div><b>${fmt(x.m)}</b>${I('chev',18)}</button>`).join('')}</div>
+ <div class="list">${el.map((x,i)=>`<button class="item" onclick="openV('bull',{id:'${x.e.id}'})"><div class="av" style="${i<3?'background:var(--mango);color:var(--ink)':''}">${i+1}</div><div class="grow"><div class="t">${esc(x.e.nom)}</div><div class="muted">${mention(x.m,c.bareme)}</div></div><b>${fmt(x.m)}</b>${I('chev',18)}</button>`).join('')}</div>
  <p class="muted" style="margin-top:10px">Coefficients : ${c.matieres.map(([m,k])=>m+' '+k).join(', ')}.</p>`;
 }
 VIEWS.bull=v=>{const b=bulletin(v.id);return backbar(b.e.nom,b.c.nom+' · Semestre 1')+`<div class="card"><table class="table"><thead><tr><th>Matière</th><th style="text-align:right">Coef</th><th style="text-align:right">Dev.</th><th style="text-align:right">Compo</th><th style="text-align:right">Moy.</th></tr></thead><tbody>${b.lignes.map(l=>`<tr><td>${esc(l.m)}</td><td class="n">${l.coef}</td><td class="n">${fmt(l.md)}</td><td class="n">${fmt(l.mc)}</td><td class="n">${fmt(l.moy)}</td></tr>`).join('')}</tbody></table>
@@ -1037,15 +1180,16 @@ function sheetBeh(id,type){const e=S.data.eleves.find(x=>x.id===id);const sug=ty
  sheet(`<h3>${type==='positif'?'Bon point':'À revoir'} · ${esc(e.nom)}</h3><div class="pill-row">${sug.map(s=>`<button class="chip" onclick="$('#bt').value='${s}'">${s}</button>`).join('')}</div><label class="f" for="bt">Commentaire</label><textarea class="input" id="bt"></textarea><div class="spacer"></div><button class="btn block" onclick="const t=$('#bt').value.trim();if(!t)return toast('Écris un commentaire','x');S.data.comportement.unshift({id:uid(),eleve:'${id}',type:'${type}',texte:t,date:todayISO()});save();closeSheet();render();toast('Ajouté · visible par le parent')">Ajouter</button>`)}
 function sheetDevoir(){const c=cls();sheet(`<h3>Nouveau devoir · ${c.nom}</h3><label class="f" for="dm">Matière</label><select class="input" id="dm">${c.matieres.map(([m])=>`<option>${esc(m)}</option>`).join('')}</select><label class="f" for="dt">Consigne</label><input class="input" id="dt" placeholder="Ex. Exercices 1 à 4 page 58"><label class="f" for="dd">Détails (facultatif)</label><textarea class="input" id="dd"></textarea><label class="f" for="dl">Pour le</label><input class="input" type="date" id="dl" value="${new Date(Date.now()+3*864e5).toISOString().slice(0,10)}"><div class="spacer"></div>
  <button class="btn block" onclick="const t=$('#dt').value.trim();if(!t)return toast('Écris la consigne','x');S.data.devoirs.push({id:uid(),classe:'${c.id}',matiere:$('#dm').value,titre:t,desc:$('#dd').value,limite:$('#dl').value});save();closeSheet();render();toast('Devoir publié pour les élèves et les parents')">Publier le devoir</button>`)}
-function sheetNewClass(){sheet(`<h3>Nouvelle classe</h3><label class="f" for="ncn">Nom</label><input class="input" id="ncn" placeholder="Ex. CE2 B"><label class="f" for="ncl">Niveau</label>${levelSelect('ncl','CE2')}<label class="f" for="ncf">Type</label><select class="input" id="ncf"><option value="classique">Classique</option><option value="fa">Franco-arabe</option></select><div class="spacer"></div><button class="btn block" onclick="const n=$('#ncn').value.trim();if(!n)return toast('Donne un nom à la classe','x');const c=newClass(n,$('#ncl').value,S.user.prenom,$('#ncf').value);S.user.classes.push(c.id);S.user.cls=c.id;save();closeSheet();go('home');toast('Classe créée · code '+c.code)">Créer</button>`)}
+function sheetNewClass(){sheet(`<h3>Nouvelle classe</h3><label class="f" for="ncn">Nom</label><input class="input" id="ncn" placeholder="Ex. CE2 B"><label class="f" for="ncl">Niveau</label>${levelSelect('ncl','CE2')}<label class="f" for="ncf">Type</label><select class="input" id="ncf"><option value="classique">Classique</option><option value="fa">Franco-arabe</option></select><div class="spacer"></div><button class="btn block" onclick="const n=$('#ncn').value.trim();if(!n)return toast('Donne un nom à la classe','x');const c=newClass(n,$('#ncl').value,S.user.prenom,$('#ncf').value,(cls()||{})._e);S.user.classes=S.user.classes||[];S.user.classes.push(c.id);S.user.cls=c.id;save();closeSheet();go('home');toast('Classe créée · code élèves '+c.code)">Créer</button>`)}
 function teMore(){
  const c=cls();const el=S.data.eleves.filter(e=>e.classe===c.id);
- return clsSwitch()+`<div class="list">${[['plus','Créer une classe',"sheetNewClass()"],['book','Devoirs',"open('teDevoirs')"],['star','Comportement',"open('behaviour')"],['msg','Messages parents',"open('teMsgs')"],['users','Élèves et codes parents',"open('teEleves')"]].map(([ic,l,f])=>`<button class="item" onclick="${f}"><div class="av">${I(ic,18)}</div><div class="grow t">${l}</div>${I('chev',18)}</button>`).join('')}</div>
- <div class="sec-title">Code de la classe</div><div class="card row"><div class="grow"><div style="font-family:var(--display);font-size:1.6rem;font-weight:800;letter-spacing:.04em">${c.code}</div><div class="muted">À donner aux élèves pour rejoindre ${c.nom}</div></div><button class="btn small ghost" onclick="copyTxt('Rejoins la classe ${c.nom} sur Sunu Jàng avec le code ${c.code}')">${I('copy',18)}</button></div>`;
+ return clsSwitch()+`<div class="list">${[['plus','Créer une classe',"sheetNewClass()"],['book','Devoirs',"openV('teDevoirs')"],['star','Comportement',"openV('behaviour')"],['msg','Messages parents',"openV('teMsgs')"],['users','Élèves et codes parents',"openV('teEleves')"]].map(([ic,l,f])=>`<button class="item" onclick="${f}"><div class="av">${I(ic,18)}</div><div class="grow t">${l}</div>${I('chev',18)}</button>`).join('')}</div>
+ <div class="sec-title">Code de la classe</div><div class="card row"><div class="grow"><div style="font-family:var(--display);font-size:1.6rem;font-weight:800;letter-spacing:.04em">${c.code}</div><div class="muted">À donner aux élèves pour rejoindre ${esc(c.nom)}</div></div><button class="btn small ghost" onclick="copyTxt('Rejoins la classe ${esc(c.nom)} sur Sunu Jàng (https://sunujang.org) avec le code ${c.code}')">${I('copy',18)}</button></div>
+ ${c.cleProf?`<div class="sec-title">Votre code enseignant</div><div class="card row"><div class="grow"><div style="font-family:var(--display);font-size:1.3rem;font-weight:800;letter-spacing:.04em">${esc(c.cleProf)}</div><div class="muted">Pour vous reconnecter sur un autre téléphone. Ne le donnez pas aux élèves.</div></div><button class="btn small ghost" onclick="copyTxt('${esc(c.cleProf)}')">${I('copy',18)}</button></div>`:''}`;
 }
 VIEWS.teDevoirs=v=>{const c=cls();const d=S.data.devoirs.filter(x=>x.classe===c.id);return backbar('Devoirs',c.nom)+`<button class="btn block" onclick="sheetDevoir()">${I('plus',20)}Nouveau devoir</button><div class="spacer"></div><div class="list">${d.map(x=>`<div class="item">${mono(x.matiere,40)}<div class="grow"><div class="t">${esc(x.titre)}</div><div class="muted">Pour le ${dLabel(x.limite)}</div></div><button class="iconbtn" aria-label="Supprimer" onclick="S.data.devoirs=S.data.devoirs.filter(y=>y.id!=='${x.id}');save();render()">${I('x',18)}</button></div>`).join('')||'<div class="empty">Aucun devoir publié.</div>'}</div>`};
-VIEWS.teMsgs=v=>{const ths=S.data.messages.filter(m=>S.data.eleves.find(e=>e.id===m.eleve&&S.user.classes.includes(e.classe)));return backbar('Messages parents')+`<div class="list">${ths.map(th=>{const e=S.data.eleves.find(x=>x.id===th.eleve);const l=th.msgs[th.msgs.length-1];return `<button class="item" onclick="open('thread',{id:'${th.id}',hideNav:true})"><div class="av">${initials(e.nom)}</div><div class="grow"><div class="t">Parent de ${esc(e.nom)}</div><div class="muted" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(l.txt)}</div></div></button>`}).join('')}</div>`};
-VIEWS.teEleves=v=>{const c=cls();const el=S.data.eleves.filter(e=>e.classe===c.id);return backbar('Élèves',c.nom+' · '+el.length+' élèves')+`<button class="btn block" onclick="sheetAddEleve()">${I('plus',20)}Ajouter un élève</button><div class="spacer"></div><div class="list">${el.map(e=>`<div class="item"><div class="av">${initials(e.nom)}</div><div class="grow"><div class="t">${esc(e.nom)}</div><div class="muted">Code parent : <b>${e.codeParent}</b></div></div><button class="iconbtn" aria-label="Copier le code" onclick="copyTxt('Bonjour, voici votre code parent Sunu Jàng pour suivre ${esc(e.nom)} : ${e.codeParent}')">${I('copy',18)}</button></div>`).join('')}</div>`};
+VIEWS.teMsgs=v=>{const ths=S.data.messages.filter(m=>m.msgs.length&&S.data.eleves.find(e=>e.id===m.eleve&&S.user.classes.includes(e.classe)));return backbar('Messages parents')+`<div class="list">${ths.map(th=>{const e=S.data.eleves.find(x=>x.id===th.eleve);const l=th.msgs[th.msgs.length-1];return `<button class="item" onclick="openV('thread',{id:'${th.id}',hideNav:true})"><div class="av">${initials(e.nom)}</div><div class="grow"><div class="t">Parent de ${esc(e.nom)}</div><div class="muted" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(l.txt)}</div></div></button>`}).join('')||'<div class="empty">Aucun message. Pour écrire à un parent : Plus → Élèves et codes parents.</div>'}</div>`};
+VIEWS.teEleves=v=>{const c=cls();const el=S.data.eleves.filter(e=>e.classe===c.id);return backbar('Élèves',c.nom+' · '+el.length+' élèves')+`<button class="btn block" onclick="sheetAddEleve()">${I('plus',20)}Ajouter un élève</button><div class="spacer"></div><div class="list">${el.map(e=>`<div class="item"><div class="av">${initials(e.nom)}</div><div class="grow"><div class="t">${esc(e.nom)}</div><div class="muted">Code parent : <b>${esc(e.codeParent||'—')}</b></div></div><button class="iconbtn" aria-label="Écrire au parent" onclick="openThread('${e.id}')">${I('msg',18)}</button><button class="iconbtn" aria-label="Copier le code" onclick="copyTxt('Bonjour, voici votre code parent Sunu Jàng pour suivre ${esc(e.nom)} : ${esc(e.codeParent||'')} — ouvrez https://sunujang.org, choisissez Parent puis « J\\'ai un code ».')">${I('copy',18)}</button></div>`).join('')||'<div class="empty">Aucun élève pour l\'instant.</div>'}</div>`};
 function sheetAddEleve(){const c=cls();sheet(`<h3>Ajouter un élève · ${c.nom}</h3><label class="f" for="an">Prénom et nom</label><input class="input" id="an"><label class="f">Sexe</label><div class="seg"><button class="on" id="sxF" onclick="this.classList.add('on');$('#sxM').classList.remove('on')">Fille</button><button id="sxM" onclick="this.classList.add('on');$('#sxF').classList.remove('on')">Garçon</button></div><div class="spacer"></div>
  <button class="btn block" onclick="const n=$('#an').value.trim();if(!n)return toast('Écris le nom','x');const e=addEleve({classe:'${c.id}',nom:n,sexe:$('#sxF').classList.contains('on')?'F':'M'});save();closeSheet();render();toast('Élève ajouté · code parent '+e.codeParent)">Ajouter</button>`)}
 
@@ -1067,37 +1211,37 @@ function diHome(){
 function diInscr(){
  const d=S.data;const l=d.inscriptions;
  return `<div class="sec-title" style="margin-top:6px">Inscriptions <small>${l.filter(i=>i.statut==='en_attente').length} en attente</small></div>
- <div class="stack">${l.map(i=>{const c=d.classes.find(x=>x.id===i.classe);return `<div class="card"><div class="row"><div class="av">${initials(i.enfant)}</div><div class="grow"><b>${esc(i.enfant)}</b><div class="muted">${i.age} ans · ${c?c.nom:i.niveau}</div></div>${i.statut==='en_attente'?'<span class="badge warn">En attente</span>':i.statut==='acceptee'?'<span class="badge ok">Acceptée</span>':'<span class="badge bad">Refusée</span>'}</div>
- <p class="muted" style="margin-top:8px">Parent : ${esc(i.parent)} · ${esc(i.tel)}<br>Paiement : ${i.ref?'<b>'+esc(i.ref)+'</b>':'<span style="color:var(--bad)">aucune référence</span>'}</p>
+ <div class="stack">${l.length?'':'<div class="card empty">Aucune demande pour l\'instant. Partagez le lien ci-dessous aux parents.</div>'}${l.map(i=>{const c=d.classes.find(x=>x.id===i.classe);return `<div class="card"><div class="row"><div class="av">${initials(i.enfant)}</div><div class="grow"><b>${esc(i.enfant)}</b><div class="muted">${i.age} ans · ${c?c.nom:i.niveau}</div></div>${i.statut==='en_attente'?'<span class="badge warn">En attente</span>':i.statut==='acceptee'?'<span class="badge ok">Acceptée</span>':'<span class="badge bad">Refusée</span>'}</div>
+ <p class="muted" style="margin-top:8px">Parent : ${esc(i.parent)} · ${esc(i.tel)}${i.tel?` · <a href="https://wa.me/221${esc(String(i.tel).replace(/\D/g,'').replace(/^221/,''))}" target="_blank" rel="noopener">WhatsApp</a>`:''}<br>Paiement : ${i.ref?'<b>'+esc(i.ref)+'</b>':'<span style="color:var(--bad)">aucune référence</span>'}</p>
  ${i.statut==='en_attente'?`<div class="btns" style="margin-top:10px"><button class="btn small" onclick="inscr('${i.id}',true)">${I('check',18)}Accepter</button><button class="btn small danger" onclick="inscr('${i.id}',false)">Refuser</button></div>`:i.code?`<p style="margin-top:8px">Code parent envoyé par SMS : <b>${i.code}</b></p>`:''}</div>`}).join('')}</div>
  <div class="sec-title">Lien d'inscription en ligne</div><div class="card row"><div class="grow"><b>sunujang.org/i/${d.school.code.toLowerCase()}</b><div class="muted">À partager sur WhatsApp ou Facebook</div></div><button class="btn small ghost" onclick="copyTxt('Inscrivez votre enfant au ${esc(d.school.nom)} : https://sunujang.org/i/${d.school.code.toLowerCase()}')">${I('copy',18)}</button></div>`;
 }
-function inscr(id,ok){const i=S.data.inscriptions.find(x=>x.id===id);i.statut=ok?'acceptee':'refusee';if(ok){if(!i.classe){const c=S.data.classes.find(x=>x.niveau===i.niveau)||newClass(i.niveau+' A',i.niveau,'À attribuer','classique');i.classe=c.id}const e=addEleve({classe:i.classe,nom:i.enfant});i.code=e.codeParent}save();render();toast(ok?'Inscription acceptée · code parent envoyé':'Inscription refusée · parent prévenu')}
+function inscr(id,ok){const i=S.data.inscriptions.find(x=>x.id===id);i.statut=ok?'acceptee':'refusee';if(ok){if(!i.classe||!S.data.classes.find(c=>c.id===i.classe)){const c=S.data.classes.find(x=>x.niveau===i.niveau)||newClass(i.niveau+' A',i.niveau,'À attribuer','classique');i.classe=c.id}const e=addEleve({classe:i.classe,nom:i.enfant});i.code=e.codeParent}save();render();toast(ok?'Inscription acceptée · le parent voit son code dans l\'app':'Inscription refusée · le parent le verra dans l\'app')}
 function diClasses(){
  const d=S.data;
  return `<div class="sec-title" style="margin-top:6px">Classes</div><button class="btn block" onclick="sheetClasse()">${I('plus',20)}Créer une classe</button><div class="spacer"></div>
- <div class="list">${d.classes.map(c=>`<div class="item"><div class="mono" style="background:var(--ink)">${c.niveau}</div><div class="grow"><div class="t">${c.nom}</div><div class="muted">${esc(c.prof)} · code ${c.code} · notes sur ${c.bareme}</div></div></div>`).join('')}</div>
+ <div class="list">${d.classes.map(c=>`<div class="item"><div class="mono" style="background:var(--ink)">${c.niveau}</div><div class="grow"><div class="t">${c.nom}</div><div class="muted">${esc(c.prof)} · notes sur ${c.bareme}<br>Code élèves <b>${esc(c.code)}</b>${c.cleProf?' · code enseignant <b>'+esc(c.cleProf)+'</b>':''}</div></div>${c.cleProf?`<button class="iconbtn" aria-label="Copier pour l'enseignant" onclick="copyTxt('Bonjour, voici votre accès Sunu Jàng pour la classe ${esc(c.nom)} : ouvrez https://sunujang.org, choisissez Enseignant puis « J\\'ai un code » et entrez ${esc(c.cleProf)}')">${I('copy',18)}</button>`:''}</div>`).join('')||'<div class="empty">Aucune classe pour l\'instant.</div>'}</div>
  <div class="sec-title">Enseignants</div><div class="list">${[...new Set(d.classes.map(c=>c.prof))].map(p=>`<div class="item"><div class="av">${initials(p.replace(/^(M\.|Mme) /,''))}</div><div class="grow"><div class="t">${esc(p)}</div><div class="muted">${d.classes.filter(c=>c.prof===p).map(c=>c.nom).join(', ')}</div></div></div>`).join('')}</div>`;
 }
 function sheetClasse(){sheet(`<h3>Nouvelle classe</h3><label class="f" for="cn">Nom</label><input class="input" id="cn" placeholder="Ex. 6e A"><label class="f" for="cl">Niveau</label><select class="input" id="cl">${LEVELS.map(l=>`<option>${l.id}</option>`).join('')}</select><label class="f" for="cf">Type</label><select class="input" id="cf"><option value="classique">Classique</option><option value="fa">Franco-arabe</option></select><label class="f" for="cp">Enseignant principal</label><input class="input" id="cp" placeholder="Ex. Mme Fall"><div class="spacer"></div>
- <button class="btn block" onclick="const n=$('#cn').value.trim(),p=$('#cp').value.trim(),l=$('#cl').value;if(!n||!p)return toast('Remplis le nom et l\\'enseignant','x');const c=newClass(n,l,p,$('#cf').value);save();closeSheet();render();toast('Classe créée · code '+c.code+' à donner à l\\'enseignant')">Créer</button>`)}
+ <button class="btn block" onclick="const n=$('#cn').value.trim(),p=$('#cp').value.trim(),l=$('#cl').value;if(!n||!p)return toast('Remplis le nom et l\\'enseignant','x');const c=newClass(n,l,p,$('#cf').value);save();closeSheet();render();toast(c.cleProf?'Classe créée · code enseignant '+c.cleProf:'Classe créée · code '+c.code)">Créer</button>`)}
 function diPay(){
  const d=S.data;const mo=d.mois;
  return `<div class="sec-title" style="margin-top:6px">Paiements <small>${fcfa(d.school.frais)}/mois</small></div>
  <div class="card" style="overflow-x:auto;padding:12px"><table class="table"><thead><tr><th>Classe</th>${mo.slice(0,4).map(m=>`<th style="text-align:right">${m}</th>`).join('')}</tr></thead><tbody>
  ${d.classes.map(c=>{const el=d.eleves.filter(e=>e.classe===c.id);return `<tr><td><b>${c.nom}</b></td>${mo.slice(0,4).map(m=>{const ps=d.paiements.filter(p=>p.mois===m&&el.some(e=>e.id===p.eleve));const k=ps.filter(p=>p.paye).length;return `<td class="n">${k}/${el.length}</td>`}).join('')}</tr>`}).join('')}</tbody></table></div>
- <div class="sec-title">Retards de paiement · Novembre</div><div class="list">${d.eleves.filter(e=>!d.paiements.find(p=>p.eleve===e.id&&p.mois==='Nov').paye).slice(0,8).map(e=>`<div class="item"><div class="av">${initials(e.nom)}</div><div class="grow"><div class="t">${esc(e.nom)}</div><div class="muted">${d.classes.find(c=>c.id===e.classe).nom}</div></div><button class="btn small ghost" onclick="toast('Rappel envoyé au parent par SMS')">Relancer</button></div>`).join('')}</div>
+ <div class="sec-title">Retards de paiement · Novembre</div><div class="list">${d.eleves.filter(e=>!(d.paiements.find(p=>p.eleve===e.id&&p.mois==='Nov')||{}).paye).slice(0,8).map(e=>`<div class="item"><div class="av">${initials(e.nom)}</div><div class="grow"><div class="t">${esc(e.nom)}</div><div class="muted">${esc((d.classes.find(c=>c.id===e.classe)||{}).nom||'')}</div></div><button class="btn small ghost" onclick="copyTxt('Bonjour, la mensualité de novembre de ${esc(e.nom)} (${fcfa(d.school.frais)}) n\\'est pas encore réglée. Merci. — ${esc(d.school.nom)}')">Relancer</button></div>`).join('')}</div>
  <div class="spacer"></div><button class="btn block mango" onclick="toast('Rappels envoyés à tous les parents en retard')">${I('send',20)}Relancer tout le monde</button>`;
 }
 function diMore(){
  const d=S.data;const sd=d.sondages;
- return `<div class="sec-title" style="margin-top:6px">Sondages</div>${sd.map(s=>{const tot=Object.values(s.reponses).reduce((a,b)=>a+b,0);return `<div class="card"><b>${esc(s.question)}</b>${[['oui','Oui'],['non','Non'],['peut_etre','Peut-être']].map(([k,l])=>`<div style="margin-top:10px"><div class="row"><span class="grow">${l}</span><b>${s.reponses[k]}</b></div><div class="bar"><i style="width:${tot?s.reponses[k]/tot*100:0}%"></i></div></div>`).join('')}<p class="muted" style="margin-top:8px">${tot} réponses</p></div>`}).join('<div class="spacer"></div>')}
+ return `<div class="sec-title" style="margin-top:6px">Sondages</div>${sd.map(s=>{const R=sdCount(s);const tot=Object.values(R).reduce((a,b)=>a+b,0);return `<div class="card"><b>${esc(s.question)}</b>${[['oui','Oui'],['non','Non'],['peut_etre','Peut-être']].map(([k,l])=>`<div style="margin-top:10px"><div class="row"><span class="grow">${l}</span><b>${R[k]}</b></div><div class="bar"><i style="width:${tot?R[k]/tot*100:0}%"></i></div></div>`).join('')}<p class="muted" style="margin-top:8px">${tot} réponses</p></div>`}).join('<div class="spacer"></div>')}
  <div class="spacer"></div><button class="btn ghost block" onclick="sheetSondage()">${I('plus',20)}Nouveau sondage</button>
  <div class="sec-title">Annonces envoyées</div><div class="stack">${d.annonces.map(a=>`<div class="card"><b>${esc(a.titre)}</b><p class="muted">${esc(a.txt)}</p></div>`).join('')}</div>
- <div class="sec-title">Établissement</div><div class="list"><div class="item"><div class="av">${I('school',18)}</div><div class="grow"><div class="t">${esc(d.school.nom)}</div><div class="muted">${esc(d.school.ville)}</div></div></div><div class="item"><div class="av">${I('wallet',18)}</div><div class="grow"><div class="t">Mensualité</div><div class="muted">${fcfa(d.school.frais)} · Wave ${d.school.wave}</div></div></div><div class="item"><div class="av">${I('key',18)}</div><div class="grow"><div class="t">Code établissement</div><div class="muted">${d.school.code}</div></div></div></div>`;
+ <div class="sec-title">Établissement</div><div class="list"><div class="item"><div class="av">${I('school',18)}</div><div class="grow"><div class="t">${esc(d.school.nom)}</div><div class="muted">${esc(d.school.ville)}</div></div></div><div class="item"><div class="av">${I('wallet',18)}</div><div class="grow"><div class="t">Mensualité</div><div class="muted">${fcfa(d.school.frais)} · Wave ${d.school.wave}</div></div></div><div class="item"><div class="av">${I('key',18)}</div><div class="grow"><div class="t">Code établissement</div><div class="muted">${esc(d.school.code)} · à donner aux parents pour les inscriptions</div></div></div>${S.live?`<button class="item" onclick="sheetCodes()"><div class="av">${I('lock',18)}</div><div class="grow"><div class="t">Code direction</div><div class="muted">Votre code de connexion secret</div></div>${I('chev',18)}</button>`:''}</div>`;
 }
-function sheetAnnonce(){sheet(`<h3>Annonce à tous les parents</h3><label class="f" for="at">Titre</label><input class="input" id="at"><label class="f" for="ax">Message</label><textarea class="input" id="ax"></textarea><p class="muted" style="margin-top:6px">Envoyée dans l'app et par SMS aux parents sans smartphone.</p><div class="spacer"></div><button class="btn block" onclick="const t=$('#at').value.trim(),x=$('#ax').value.trim();if(!t||!x)return toast('Remplis le titre et le message','x');S.data.annonces.unshift({id:uid(),titre:t,txt:x,date:todayISO()});save();closeSheet();render();toast('Annonce envoyée')">Envoyer</button>`)}
-function sheetSondage(){sheet(`<h3>Nouveau sondage</h3><label class="f" for="sq">Question</label><textarea class="input" id="sq" placeholder="Ex. Êtes-vous d'accord pour des cours de renforcement le samedi ?"></textarea><p class="muted" style="margin-top:6px">Les parents répondent Oui, Non ou Peut-être.</p><div class="spacer"></div><button class="btn block" onclick="const q=$('#sq').value.trim();if(!q)return toast('Écris la question','x');S.data.sondages.forEach(s=>s.actif=false);S.data.sondages.unshift({id:uid(),question:q,reponses:{oui:0,non:0,peut_etre:0},maReponse:null,actif:true});save();closeSheet();render();toast('Sondage publié')">Publier</button>`)}
+function sheetAnnonce(){sheet(`<h3>Annonce à tous les parents</h3><label class="f" for="at">Titre</label><input class="input" id="at"><label class="f" for="ax">Message</label><textarea class="input" id="ax"></textarea><p class="muted" style="margin-top:6px">Envoyée dans l'app et par SMS aux parents sans smartphone.</p><div class="spacer"></div><button class="btn block" onclick="const t=$('#at').value.trim(),x=$('#ax').value.trim();if(!t||!x)return toast('Remplis le titre et le message','x');S.data.annonces.unshift({id:uid(),titre:t,txt:x,date:todayISO(),_e:S.espace});save();closeSheet();render();toast('Annonce envoyée')">Envoyer</button>`)}
+function sheetSondage(){sheet(`<h3>Nouveau sondage</h3><label class="f" for="sq">Question</label><textarea class="input" id="sq" placeholder="Ex. Êtes-vous d'accord pour des cours de renforcement le samedi ?"></textarea><p class="muted" style="margin-top:6px">Les parents répondent Oui, Non ou Peut-être.</p><div class="spacer"></div><button class="btn block" onclick="const q=$('#sq').value.trim();if(!q)return toast('Écris la question','x');S.data.sondages.forEach(s=>s.actif=false);S.data.sondages.unshift({id:uid(),question:q,actif:true,date:todayISO(),_e:S.espace});save();closeSheet();render();toast('Sondage publié')">Publier</button>`)}
 
 // ---------- parent sans enfant lié / ajout d'un enfant ----------
 function paEmpty(){
@@ -1108,9 +1252,23 @@ function paEmpty(){
  <button class="item" onclick="S.role='student';S.user=null;save();render()"><div class="av">${I('book',18)}</div><div class="grow"><div class="t">Faire réviser votre enfant</div><div class="muted">Cours et quiz gratuits du CI à la Terminale</div></div>${I('chev',18)}</button>
  <button class="item" onclick="copyTxt('Bonjour, notre école peut s\\'inscrire gratuitement sur Sunu Jàng pour les notes, absences et paiements : https://sunujang.org/ecole')"><div class="av">${I('school',18)}</div><div class="grow"><div class="t">Votre école n'est pas sur Sunu Jàng ?</div><div class="muted">Envoyez-lui l'invitation par WhatsApp</div></div>${I('copy',18)}</button></div>`;
 }
-function linkKid(code){const ks=S.data.eleves.filter(e=>e.codeParent===code);if(!ks.length)return toast('Code parent introuvable. Vérifiez auprès de l\'école.','x');ks.forEach(k=>{if(!S.user.kids.includes(k.id))S.user.kids.push(k.id)});S.user.kid=ks[0].id;S.user.sub='Parent · '+S.user.kids.map(id=>S.data.eleves.find(e=>e.id===id).nom.split(' ')[0]).join(', ');save();closeSheet();go('home');toast(ks[0].nom+' ajouté')}
+async function linkKid(code){code=String(code||'').trim().toUpperCase();if(!code)return toast('Entrez le code parent','x');
+ if(S.live){wait(true);const k=await addKey(code);wait(false);if(!k||k.role!=='parent'){S.keys=S.keys.filter(x=>x!==code);return toast('Code parent introuvable. Vérifiez auprès de l\'école.','x')}
+  buildUser();S.user.kid=k.eleve;save();closeSheet();go('home');const e=S.data.eleves.find(x=>x.id===k.eleve);return toast((e?e.nom:'Enfant')+' ajouté')}
+ const ks=S.data.eleves.filter(e=>e.codeParent===code);if(!ks.length)return toast('Code parent introuvable. Vérifiez auprès de l\'école.','x');ks.forEach(k=>{if(!S.user.kids.includes(k.id))S.user.kids.push(k.id)});S.user.kid=ks[0].id;S.user.sub='Parent · '+S.user.kids.map(id=>S.data.eleves.find(e=>e.id===id).nom.split(' ')[0]).join(', ');save();closeSheet();go('home');toast(ks[0].nom+' ajouté')}
+async function lookupSchool(v){const code=String(v||'').trim().toUpperCase();const box=$('#ksinfo');if(!code){S._sch=null;box&&(box.innerHTML='');return}
+ try{const r=await api('sj_school_info',{p_code:code});S._sch=r;S._invite=code;if(!r){box.innerHTML='<p class="muted" style="color:var(--bad)">Aucune école avec ce code.</p>';return}
+  const sc=r.school||{};box.innerHTML=`<div class="card" style="margin-top:10px;background:var(--baobab-soft);border-color:#BFDCCD"><b>${esc(sc.nom)}</b><div class="muted">${esc(sc.ville||'')}</div>${sc.frais?`<p class="muted" style="margin-top:6px;color:var(--ink-2)">Mensualité ${fcfa(sc.frais)}${sc.wave&&sc.wave!=='—'?' · paiement Wave / Orange Money au '+esc(sc.wave):''}</p>`:''}</div>`}
+ catch(e){box.innerHTML='<p class="muted" style="color:var(--bad)">Impossible de vérifier le code (connexion ?).</p>'}}
 function sheetAddKid(mode='code'){
  const sc=S.data.school;
+ if(S.live&&mode==='inscr'){
+  sheet(`<h3>Ajouter mon enfant</h3><div class="tabs2" style="margin-top:10px"><button onclick="sheetAddKid('code')">J'ai un code parent</button><button class="on">L'inscrire à l'école</button></div>
+  <label class="f" for="ksc">Code de l'école</label><input class="input" id="ksc" placeholder="Ex. PIONNIER42" autocapitalize="characters" value="${esc(S._invite||'')}" onchange="lookupSchool(this.value)"><p class="muted" style="margin-top:6px">Demandez-le à l'école, ou ouvrez le lien d'inscription qu'elle a partagé.</p><div id="ksinfo"></div>
+  <label class="f" for="kn">Prénom et nom de l'enfant</label><input class="input" id="kn"><div class="grid2"><div><label class="f" for="ka">Âge</label><input class="input" id="ka" inputmode="numeric"></div><div><label class="f" for="kl">Classe demandée</label>${levelSelect('kl','CM2')}</div></div>
+  <label class="f" for="kr">Référence du paiement (facultatif)</label><input class="input" id="kr" placeholder="Ex. WV-88213">
+  <div class="spacer"></div><button class="btn block" onclick="sendInscr()">Envoyer la demande</button>`);
+  if(S._invite)lookupSchool(S._invite);return}
  sheet(`<h3>Ajouter mon enfant</h3><div class="tabs2" style="margin-top:10px"><button class="${mode==='code'?'on':''}" onclick="sheetAddKid('code')">J'ai un code parent</button><button class="${mode==='inscr'?'on':''}" onclick="sheetAddKid('inscr')">L'inscrire à l'école</button></div>
  ${mode==='code'?`<p class="muted">Le code parent est sur la fiche d'inscription, ou demandez-le à l'enseignant.</p><label class="f" for="kc">Code parent</label><input class="input" id="kc" placeholder="Ex. PAR-4100" autocapitalize="characters"><div class="spacer"></div><button class="btn block" onclick="linkKid($('#kc').value.trim().toUpperCase())">Ajouter</button>`:
  `<label class="f" for="ks">École</label><select class="input" id="ks"><option>${esc(sc.nom)} — ${esc(sc.ville)}</option></select>
@@ -1118,21 +1276,38 @@ function sheetAddKid(mode='code'){
  ${sc.frais?`<div class="card" style="margin-top:14px;background:var(--mango-soft);border-color:#F3D9A6"><b>Frais d'inscription</b><p class="muted" style="color:var(--ink-2)">Payez par Wave ou Orange Money au ${esc(sc.wave)}, puis collez la référence. Vous pouvez aussi payer sur place.</p></div><label class="f" for="kr">Référence du paiement (facultatif)</label><input class="input" id="kr" placeholder="Ex. WV-88213">`:''}
  <div class="spacer"></div><button class="btn block" onclick="sendInscr()">Envoyer la demande</button>`}`);
 }
-function sendInscr(){const n=$('#kn').value.trim();if(!n)return toast('Indiquez le nom de l\'enfant','x');const lv=$('#kl').value;const c=S.data.classes.find(x=>x.niveau===lv);
+async function sendInscr(){const n=$('#kn').value.trim();if(!n)return toast('Indiquez le nom de l\'enfant','x');const lv=$('#kl').value;
+ if(S.live){const code=($('#ksc')||{value:''}).value.trim().toUpperCase();if(!code)return toast('Entrez le code de l\'école','x');
+  wait(true);try{const info=S._sch&&S._sch.code===code?S._sch:await api('sj_school_info',{p_code:code});if(!info){wait(false);return toast('Aucune école avec ce code','x')}
+   const c=(info.classes||[]).find(x=>x.niveau===lv);
+   const r=await api('sj_inscrire',{p_code:code,p_data:{enfant:n,age:parseInt($('#ka').value)||'',niveau:lv,classe:c?c.id:null,parent:S.user.nom||S.user.prenom,tel:S.user.tel||'',ref:($('#kr')||{value:''}).value.trim(),ecole:(info.school||{}).nom||''}});
+   S.keys.push(r.token);await pullNow({force:true});S._invite=null;buildUser();save();closeSheet();render();toast('Demande envoyée à l\'école')}
+  catch(e){toast('Envoi impossible. Vérifiez votre connexion.','x')}finally{wait(false)}return}
+ const c=S.data.classes.find(x=>x.niveau===lv);
  const i={id:uid(),enfant:n,age:parseInt($('#ka').value)||'',niveau:lv,classe:c?c.id:null,parent:S.user.prenom,tel:S.user.tel||'',ref:($('#kr')||{value:''}).value.trim(),statut:'en_attente',date:todayISO(),ecole:S.data.school.nom};
  S.data.inscriptions.unshift(i);S.user.pending=[...(S.user.pending||[]),i.id];save();closeSheet();render();toast('Demande envoyée à l\'école')}
-const P=f=>()=>S.user.kids&&S.user.kids.length?f():paEmpty();
+const P=f=>()=>S.user.kids&&S.user.kids.length&&kid()?f():paEmpty();
+const TC=f=>()=>cls()?f():`<section class="hero">${WAX()}<h2>Aucune classe</h2><p>Créez votre classe, ou connectez-vous avec le code enseignant donné par la direction.</p><button class="btn" onclick="sheetNewClass()">${I('plus',20)}Créer une classe</button></section>`;
 
 // ---------- rôles ----------
 const ROLES={
  student:{tabs:[{id:'home',icon:'home',label:'home',fn:stHome},{id:'courses',icon:'book',label:'courses',fn:stCourses},{id:'quiz',icon:'quiz',label:'quiz',fn:stQuizHome},{id:'exams',icon:'award',label:'exams',fn:stExams},{id:'me',icon:'user',label:'me',fn:stMe}]},
  parent:{tabs:[{id:'home',icon:'home',label:'home',fn:P(paHome)},{id:'notes',icon:'chart',label:'notes',fn:P(paNotes)},{id:'school',icon:'school',label:'school',fn:P(paSchool)},{id:'pay',icon:'wallet',label:'pay',fn:P(paPay)},{id:'msgs',icon:'msg',label:'msgs',fn:P(paMsgs)}]},
- teacher:{tabs:[{id:'home',icon:'home',label:'home',fn:teHome},{id:'call',icon:'check',label:'call',fn:teCall},{id:'notes',icon:'clip',label:'notes',fn:teNotes},{id:'bulletins',icon:'chart',label:'bulletins',fn:teBulletins},{id:'more',icon:'grid',label:'more',fn:teMore}]},
+ teacher:{tabs:[{id:'home',icon:'home',label:'home',fn:TC(teHome)},{id:'call',icon:'check',label:'call',fn:TC(teCall)},{id:'notes',icon:'clip',label:'notes',fn:TC(teNotes)},{id:'bulletins',icon:'chart',label:'bulletins',fn:TC(teBulletins)},{id:'more',icon:'grid',label:'more',fn:TC(teMore)}]},
  director:{tabs:[{id:'home',icon:'chart',label:'dash',fn:diHome},{id:'inscr',icon:'users',label:'inscr',fn:diInscr},{id:'classes',icon:'school',label:'classes',fn:diClasses},{id:'pay',icon:'wallet',label:'pay',fn:diPay},{id:'more',icon:'grid',label:'more',fn:diMore}]}};
 
+// liens partagés : sunujang.org/i/CODE (inscription) et sunujang.org/ecole
+(function(){const q=new URLSearchParams(location.search);const path=q.get('p')||location.pathname;
+ const m=path.match(/^\/i\/([A-Za-z0-9-]{3,20})/);if(m){S._invite=m[1].toUpperCase();if(!S.user){S.role='parent';S.loginMode='new'}}
+ else if(/^\/ecole/.test(path)&&!S.user){S.role='director';S.loginMode='new'}
+ if(q.get('p')||m)history.replaceState(null,'','/')})();
 restoreView();
 if(S.role&&S.user&&!ROLES[S.role].tabs.find(x=>x.id===S.tab))S.tab='home';
-addEventListener('online',render);addEventListener('offline',render);
+addEventListener('online',()=>{render();refresh()});addEventListener('offline',()=>setNet());
+document.addEventListener('visibilitychange',()=>{if(!document.hidden)refresh()});
+setInterval(refresh,60000);
+if(S.live&&S.keys.length)setTimeout(refresh,300);
+if(S._invite&&S.user&&S.role==='parent')setTimeout(()=>sheetAddKid('inscr'),400);
 addEventListener('keydown',e=>{if(e.key==='Escape')closeSheet()});
 render();
 </script>
