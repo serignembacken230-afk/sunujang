@@ -1,0 +1,78 @@
+/* Sunu Jàng — 2nde, 1ère · Mathématiques et Français
+   Programmes du second cycle (Sénégal), niveau des séries scientifiques pour les maths. */
+(window.SJ_CONTENT=window.SJ_CONTENT||[]).push({
+chapters:{
+'2nde|Mathématiques':['Calcul dans ℝ : intervalles, valeur absolue','Polynômes et fractions rationnelles','Équations et inéquations du second degré','Généralités sur les fonctions','Vecteurs et barycentre','Repérage et droites','Angles orientés et trigonométrie','Statistiques'],
+'2nde|Français':['Lire un texte littéraire','Les genres littéraires','Le récit et ses techniques','La poésie : versification et images','Initiation au commentaire','Initiation à la dissertation','Le résumé de texte'],
+'1ère|Mathématiques':['Le second degré','Limites et continuité','Dérivation','Étude de fonctions','Les suites numériques','Barycentre et lignes de niveau','Produit scalaire','Trigonométrie : formules et équations'],
+'1ère|Français':['L\'argumentation','Le commentaire composé','La dissertation littéraire','Le résumé suivi de discussion','Le roman africain','Le théâtre classique et africain','La poésie de la Négritude']
+},
+lessons:{
+'2nde|Mathématiques|0':{dur:6,html:`<ul><li>Intervalles : [a ; b] (bornes incluses), ]a ; b[ (exclues), [a ; +∞[.</li><li>Union et intersection d'intervalles.</li><li>|x| = x si x ≥ 0 ; |x| = −x si x &lt; 0. |x − a| est la distance entre x et a.</li><li>|x − 3| ≤ 2 ⇔ 1 ≤ x ≤ 5 ⇔ x ∈ [1 ; 5].</li><li>Encadrement et approximation : 1,414 &lt; √2 &lt; 1,415.</li></ul>`},
+'2nde|Mathématiques|1':{dur:6,html:`<ul><li>Un polynôme P(x) = 2x³ − x + 4 est de degré 3.</li><li>Si P(a) = 0, alors P(x) est factorisable par (x − a) : P(x) = (x − a)Q(x).</li><li>Division euclidienne ou identification des coefficients pour trouver Q.</li></ul><div class="ex">P(x) = x³ − 1 : P(1) = 0, donc P(x) = (x − 1)(x² + x + 1).</div><p>Fraction rationnelle : quotient de deux polynômes, définie quand le dénominateur ≠ 0.</p>`},
+'2nde|Mathématiques|2':{dur:7,html:`<div class="box">ax² + bx + c = 0 (a ≠ 0) ; Δ = b² − 4ac<br>Δ &gt; 0 : x = (−b ± √Δ)/(2a) ; Δ = 0 : x = −b/(2a) ; Δ &lt; 0 : pas de solution réelle</div><div class="ex">x² − 5x + 6 = 0 : Δ = 25 − 24 = 1 ; x = 2 ou x = 3.</div><p>Signe du trinôme : du signe de a à l'extérieur des racines, du signe contraire entre les racines.</p>`},
+'2nde|Mathématiques|3':{dur:6,html:`<ul><li>Ensemble de définition, image, antécédent.</li><li>Sens de variation : croissante, décroissante ; tableau de variation.</li><li>Parité : f paire si f(−x) = f(x) (courbe symétrique par rapport à l'axe des ordonnées) ; impaire si f(−x) = −f(x) (symétrique par rapport à O).</li><li>Fonctions de référence : x², 1/x, √x, |x|, ax + b.</li></ul>`},
+'2nde|Mathématiques|4':{dur:7,html:`<ul><li>Relation de Chasles : AB + BC = AC (vecteurs).</li><li>Colinéarité : u et v colinéaires s'il existe k tel que v = k u.</li><li><b>Barycentre</b> de (A, a) et (B, b) avec a + b ≠ 0 : le point G tel que a GA + b GB = 0 (vecteur nul).</li><li>Pour tout point M : a MA + b MB = (a + b) MG.</li><li>Isobarycentre de A et B : le milieu ; de A, B, C : le centre de gravité.</li></ul>`},
+'2nde|Mathématiques|5':{dur:6,html:`<ul><li>Coordonnées d'un vecteur, du milieu, distance (repère orthonormé).</li><li>Condition de colinéarité : xy' − x'y = 0.</li><li>Équation cartésienne d'une droite : ax + by + c = 0 ; vecteur directeur (−b ; a).</li><li>Équation réduite y = mx + p ; droites parallèles : même coefficient directeur.</li><li>Intersection de deux droites : résoudre un système.</li></ul>`},
+'2nde|Mathématiques|6':{dur:7,html:`<ul><li>Le radian : π rad = 180°.</li><li>Cercle trigonométrique : M(cos x ; sin x).</li><li>cos² x + sin² x = 1 ; −1 ≤ cos x ≤ 1.</li><li>cos(−x) = cos x ; sin(−x) = −sin x ; cos(π − x) = −cos x ; sin(π − x) = sin x.</li><li>Angles orientés : mesure principale dans ]−π ; π].</li></ul><table class="table"><tr><th>x</th><td>0</td><td>π/6</td><td>π/4</td><td>π/3</td><td>π/2</td></tr><tr><th>cos</th><td>1</td><td>√3/2</td><td>√2/2</td><td>1/2</td><td>0</td></tr><tr><th>sin</th><td>0</td><td>1/2</td><td>√2/2</td><td>√3/2</td><td>1</td></tr></table>`},
+'2nde|Mathématiques|7':{dur:6,html:`<ul><li>Moyenne, médiane, mode, quartiles.</li><li>Étendue, <b>variance</b> V = (1/N) Σ nᵢ xᵢ² − x̄², <b>écart-type</b> σ = √V.</li><li>Histogramme, polygone des effectifs cumulés, diagramme en boîte.</li></ul>`},
+'2nde|Français|0':{dur:6,html:`<ol><li>Le paratexte : auteur, titre, œuvre, date.</li><li>L'énonciation : qui parle ? à qui ? (pronoms, temps).</li><li>Le thème et les champs lexicaux.</li><li>Les procédés : figures de style, rythme, ponctuation.</li><li>Le registre : lyrique, comique, tragique, épique, pathétique, polémique, fantastique.</li></ol><div class="box">Toujours relier un procédé à l'effet qu'il produit.</div>`},
+'2nde|Français|1':{dur:5,html:`<table class="table"><tr><th>Genre</th><th>Formes</th></tr><tr><td>Narratif</td><td>roman, nouvelle, conte, épopée</td></tr><tr><td>Poétique</td><td>poème en vers, en prose, chanson</td></tr><tr><td>Théâtral</td><td>tragédie, comédie, drame</td></tr><tr><td>Argumentatif</td><td>essai, fable, apologue, article, discours</td></tr></table><p>La littérature orale africaine : contes, mythes, épopées (Soundiata), proverbes, chants des griots.</p>`},
+'2nde|Français|2':{dur:6,html:`<ul><li>Narrateur et focalisation (zéro, interne, externe).</li><li>Ordre du récit : chronologie, retour en arrière (analepse), anticipation (prolepse).</li><li>Rythme : scène, sommaire, ellipse, pause descriptive.</li><li>Portrait des personnages : physique et moral.</li></ul>`},
+'2nde|Français|3':{dur:6,html:`<ul><li>Compter les syllabes : le e muet se prononce devant une consonne, pas en fin de vers.</li><li>Alexandrin (12), décasyllabe (10), octosyllabe (8).</li><li>Rimes pauvres, suffisantes, riches ; masculines et féminines.</li><li>Images : comparaison, métaphore, personnification, allégorie.</li><li>Sonorités : allitération, assonance.</li></ul>`},
+'2nde|Français|4':{dur:6,html:`<p>Le commentaire présente un texte de façon organisée.</p><ol><li>Introduction : situation du texte, idée générale, problématique, axes.</li><li>Développement : 2 axes, chacun avec 2 ou 3 sous-parties.</li><li>Chaque idée = affirmation + citation + analyse du procédé + interprétation.</li><li>Conclusion : bilan, ouverture.</li></ol>`},
+'2nde|Français|5':{dur:6,html:`<ol><li>Comprendre le sujet : mots-clés, consigne, problématique.</li><li>Chercher des idées et des exemples tirés des œuvres lues.</li><li>Construire un plan (analytique ou dialectique).</li><li>Rédiger introduction, développement en paragraphes argumentés, conclusion.</li></ol>`},
+'2nde|Français|6':{dur:5,html:`<p>Résumer, c'est réduire le texte en gardant ses idées essentielles, leur ordre et le point de vue de l'auteur, sans ajouter d'idée personnelle. On reformule et on respecte le nombre de mots imposé (±10 %).</p>`},
+'1ère|Mathématiques|0':{dur:7,html:`<div class="box">Forme canonique : ax² + bx + c = a[(x + b/(2a))² − Δ/(4a²)]<br>Sommet de la parabole : (−b/(2a) ; f(−b/(2a)))</div><ul><li>Somme et produit des racines : x₁ + x₂ = −b/a ; x₁ x₂ = c/a.</li><li>Factorisation : a(x − x₁)(x − x₂).</li><li>Inéquations du second degré par tableau de signes.</li><li>Équations bicarrées : on pose X = x².</li></ul>`},
+'1ère|Mathématiques|1':{dur:7,html:`<ul><li>Limites des fonctions usuelles en +∞, −∞ et en un réel.</li><li>Opérations sur les limites et formes indéterminées (∞ − ∞, 0 × ∞, ∞/∞, 0/0).</li><li>Polynôme en ±∞ : limite du terme de plus haut degré.</li><li>Asymptotes verticales, horizontales, obliques.</li><li>Continuité : une fonction est continue en a si lim f(x) = f(a) quand x → a.</li></ul>`},
+'1ère|Mathématiques|2':{dur:7,html:`<div class="box">f'(a) = lim [f(a + h) − f(a)]/h quand h → 0<br>Tangente : y = f'(a)(x − a) + f(a)</div><table class="table"><tr><th>f</th><th>f'</th></tr><tr><td>xⁿ</td><td>n xⁿ⁻¹</td></tr><tr><td>√x</td><td>1/(2√x)</td></tr><tr><td>1/x</td><td>−1/x²</td></tr><tr><td>u v</td><td>u'v + uv'</td></tr><tr><td>u/v</td><td>(u'v − uv')/v²</td></tr></table>`},
+'1ère|Mathématiques|3':{dur:7,html:`<ol><li>Domaine de définition.</li><li>Limites aux bornes, asymptotes.</li><li>Dérivée, signe, tableau de variation.</li><li>Extremums, tangentes particulières.</li><li>Éléments de symétrie.</li><li>Tracé de la courbe.</li></ol><div class="ex">f(x) = x³ − 3x : f'(x) = 3x² − 3 = 3(x − 1)(x + 1). Maximum local f(−1) = 2, minimum local f(1) = −2. f est impaire.</div>`},
+'1ère|Mathématiques|4':{dur:7,html:`<ul><li>Suite définie par une formule uₙ = f(n) ou par récurrence uₙ₊₁ = f(uₙ).</li><li>Sens de variation : étudier uₙ₊₁ − uₙ.</li><li>Suite arithmétique : uₙ = u₀ + nr ; suite géométrique : uₙ = u₀ qⁿ.</li><li>Sommes : 1 + 2 + … + n = n(n + 1)/2 ; 1 + q + … + qⁿ = (1 − qⁿ⁺¹)/(1 − q).</li><li>Suites majorées, minorées, bornées.</li></ul>`},
+'1ère|Mathématiques|5':{dur:7,html:`<ul><li>Barycentre de n points pondérés, associativité (barycentres partiels).</li><li>Coordonnées : x_G = (a x_A + b x_B + c x_C)/(a + b + c).</li><li>Lignes de niveau : ensemble des points M tels que MA² + MB² = k, ou MA/MB = k : cercles ou droites.</li></ul>`},
+'1ère|Mathématiques|6':{dur:7,html:`<div class="box">u · v = ‖u‖ ‖v‖ cos(u, v) = xx' + yy' (repère orthonormé)<br>u ⊥ v ⇔ u · v = 0</div><ul><li>Al-Kashi : a² = b² + c² − 2bc cos Â.</li><li>Théorème de la médiane : MA² + MB² = 2MI² + AB²/2.</li><li>Équation d'un cercle : (x − a)² + (y − b)² = r².</li></ul>`},
+'1ère|Mathématiques|7':{dur:7,html:`<div class="box">cos(a + b) = cos a cos b − sin a sin b<br>sin(a + b) = sin a cos b + cos a sin b<br>cos 2a = cos² a − sin² a = 2cos² a − 1 ; sin 2a = 2 sin a cos a</div><ul><li>cos x = cos α ⇔ x = α + 2kπ ou x = −α + 2kπ.</li><li>sin x = sin α ⇔ x = α + 2kπ ou x = π − α + 2kπ.</li><li>a cos x + b sin x = r cos(x − φ) avec r = √(a² + b²).</li></ul>`},
+'1ère|Français|0':{dur:6,html:`<ul><li><b>Convaincre</b> (raison : arguments, logique) et <b>persuader</b> (sentiments : émotion, séduction).</li><li>Types d'arguments : par l'exemple, par l'autorité, par l'analogie, par l'absurde.</li><li>Formes : essai, discours, lettre ouverte, fable, conte philosophique.</li><li>Concession : reconnaître une partie de la thèse adverse pour mieux la réfuter (certes… mais…).</li></ul>`},
+'1ère|Français|1':{dur:7,html:`<p>Le commentaire <b>composé</b> organise l'analyse autour de centres d'intérêt, sans suivre le texte ligne à ligne.</p><ul><li>Lecture méthodique au brouillon : énonciation, thèmes, procédés, registres.</li><li>2 ou 3 axes formulés comme des idées (« un portrait satirique du pouvoir »).</li><li>Citations courtes intégrées à la phrase et analysées.</li><li>Transitions entre les parties.</li></ul>`},
+'1ère|Français|2':{dur:7,html:`<ul><li>Sujets : fonction de la littérature, rôle de l'écrivain, lecture, genres.</li><li>Analyse du sujet et problématique.</li><li>Plan dialectique ou thématique.</li><li>Exemples littéraires précis (titre, auteur, passage).</li><li>Introduction en trois temps ; conclusion bilan + ouverture.</li></ul>`},
+'1ère|Français|3':{dur:7,html:`<p><b>Résumé</b> : réduire un texte argumentatif au quart environ, fidèlement, avec ses propres mots et ses articulations logiques.</p><p><b>Discussion</b> : discuter une idée du texte en deux parties (adhésion, limites), avec introduction et conclusion.</p><div class="box">Indique le nombre de mots du résumé à la fin.</div>`},
+'1ère|Français|4':{dur:6,html:`<ul><li>Roman de la contestation coloniale : Oyono (<i>Une vie de boy</i>), Mongo Beti, Sembène (<i>Les Bouts de bois de Dieu</i>).</li><li>Roman du conflit des cultures : Cheikh Hamidou Kane (<i>L'Aventure ambiguë</i>).</li><li>Roman du désenchantement : Kourouma (<i>Les Soleils des indépendances</i>).</li><li>Roman et condition des femmes : Mariama Bâ, Aminata Sow Fall, Ken Bugul.</li></ul>`},
+'1ère|Français|5':{dur:6,html:`<ul><li>Théâtre classique : règle des trois unités (temps, lieu, action), bienséance, vraisemblance. Corneille (<i>Le Cid</i>), Racine, Molière.</li><li>Théâtre africain : héros historiques (Cheik Aliou Ndao, <i>L'Exil d'Albouri</i>), satire politique (Césaire), comédie sociale.</li><li>Le comique : de mots, de gestes, de situation, de caractère.</li></ul>`},
+'1ère|Français|6':{dur:6,html:`<ul><li>Origine : Paris, années 1930 ; Senghor, Césaire, Damas.</li><li>Thèmes : la terre africaine, la femme noire, la mère, les ancêtres, la révolte contre la colonisation, le métissage culturel.</li><li>Style : versets amples, rythme inspiré des chants et instruments (kora, tam-tam), images.</li><li>Poètes : Senghor (<i>Chants d'ombre</i>, <i>Éthiopiques</i>), Césaire, Damas, David Diop (<i>Coups de pilon</i>), Birago Diop.</li></ul>`}
+},
+bank:{
+'2nde|Mathématiques':[
+ ["|x − 3| ≤ 2 ⇔",["x ∈ [1 ; 5]","x ∈ [−5 ; 5]","x ≤ 5","x ∈ ]1 ; 5["],0,"Distance à 3 au plus 2."],
+ ["x² − 5x + 6 = 0 : solutions",["2 et 3","−2 et −3","1 et 6","pas de solution"],0,"Δ = 1."],
+ ["Si Δ < 0, l'équation du 2nd degré a :",["2 solutions","1 solution","aucune solution réelle","une infinité"],2,"Pas de racine réelle."],
+ ["Une fonction paire vérifie :",["f(−x) = −f(x)","f(−x) = f(x)","f(0) = 0","f(x) > 0"],1,"Symétrie / axe des ordonnées."],
+ ["Isobarycentre de A et B :",["A","B","le milieu de [AB]","le centre du cercle"],2,"Poids égaux."],
+ ["π rad = ",["90°","180°","360°","57°"],1,"π rad = 180°."],
+ ["cos(π/3) = ",["√3/2","1/2","√2/2","0"],1,"Valeur remarquable."],
+ ["P(1) = 0 signifie que P(x) est factorisable par",["x + 1","x − 1","x","x² − 1"],1,"Racine 1."]
+],
+'2nde|Français':[
+ ["Le registre qui exprime les sentiments du moi :",["épique","lyrique","comique","polémique"],1,"Lyrique."],
+ ["Retour en arrière dans un récit :",["prolepse","analepse","ellipse","pause"],1,"Analepse."],
+ ["Vers de 12 syllabes :",["octosyllabe","décasyllabe","alexandrin","hexasyllabe"],2,"Alexandrin."],
+ ["La fable appartient au genre :",["théâtral","argumentatif","épique seulement","lyrique"],1,"Apologue."],
+ ["Dans un commentaire, une idée s'appuie sur :",["une citation analysée","un résumé","son avis seul","une date"],0,"Citation + analyse."]
+],
+'1ère|Mathématiques':[
+ ["Somme des racines de ax² + bx + c :",["c/a","−b/a","b/a","−c/a"],1,"x₁ + x₂ = −b/a."],
+ ["Sommet de la parabole : abscisse",["b/(2a)","−b/(2a)","−b/a","Δ/(4a)"],1,"−b/(2a)."],
+ ["Dérivée de √x :",["2√x","1/(2√x)","1/√x","√x/2"],1,"Dérivée usuelle."],
+ ["f(x) = x³ − 3x a un maximum local en",["x = 1","x = −1","x = 0","x = 3"],1,"f' change de signe de + à −."],
+ ["1 + 2 + … + 100 = ",["5 050","10 100","5 000","101"],0,"100 × 101 ÷ 2."],
+ ["u · v = 0 signifie :",["u et v colinéaires","u ⊥ v","u = v","u nul seulement"],1,"Orthogonalité."],
+ ["Al-Kashi : a² = ",["b² + c²","b² + c² − 2bc cos Â","b² − c²","2bc cos Â"],1,"Généralise Pythagore."],
+ ["sin 2a = ",["2 sin a","2 sin a cos a","sin² a − cos² a","cos² a"],1,"Formule de duplication."]
+],
+'1ère|Français':[
+ ["Convaincre s'adresse surtout :",["aux émotions","à la raison","aux sens","à la mémoire"],1,"Persuader : aux sentiments."],
+ ["« Certes… mais… » exprime :",["la cause","la concession","la conséquence","le but"],1,"Concession."],
+ ["Le commentaire composé est organisé :",["ligne par ligne","en axes de lecture","sans plan","par ordre alphabétique"],1,"Centres d'intérêt."],
+ ["Règle des trois unités : temps, lieu et",["action","personnage","décor","rime"],0,"Théâtre classique."],
+ ["« L'Aventure ambiguë » est de :",["Kourouma","Cheikh Hamidou Kane","Oyono","Sembène"],1,"Conflit des cultures."],
+ ["Recueil de Senghor :",["Coups de pilon","Chants d'ombre","Pigments","Cahier d'un retour au pays natal"],1,"1945."]
+]}
+});
