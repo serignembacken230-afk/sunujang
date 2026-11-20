@@ -228,6 +228,7 @@ textarea.input{padding:12px 14px;min-height:96px;resize:vertical}
 .lesson td.ar{font-size:1.3em;text-align:right;display:table-cell}
 .mono.arm{font-family:'Noto Naskh Arabic',serif;font-weight:700;font-size:1.25rem;padding-bottom:4px}
 .q .ar,.opt .ar{font-size:1.25em}
+.arl{font-size:1.18rem;line-height:1.95;text-align:right}.arl .table th,.arl .table td{text-align:right}.arl ul,.arl ol{padding-right:1.3em;padding-left:0}
 .arsub{font-family:'Noto Naskh Arabic',serif;color:var(--ink-3);font-size:1rem;direction:rtl}
 .track{display:flex;gap:8px;margin-top:4px}
 .track button{flex:1;text-align:left;border:1.5px solid var(--line);border-radius:16px;padding:12px;background:var(--card);min-height:70px}
@@ -242,7 +243,7 @@ textarea.input{padding:12px 14px;min-height:96px;resize:vertical}
 <body>
 <div id="root"></div>
 <script src="contenu/cm2-maths.js"></script>
-<script src="contenu/cm2-francais.js"></script><script src="contenu/3e-maths.js"></script><script src="contenu/3e-francais.js"></script><script src="contenu/cm2-eveil.js"></script><script src="contenu/3e-sciences.js"></script><script src="contenu/3e-societe.js"></script><script src="contenu/tle-sciences.js"></script><script src="contenu/tle-lettres.js"></script><script src="contenu/elem-base.js"></script><script src="contenu/moyen-base.js"></script><script src="contenu/lycee-base.js"></script><script src="contenu/elem-eveil.js"></script><script src="contenu/moyen-autres.js"></script><script src="contenu/lycee-autres.js"></script><script src="contenu/lycee-serie-L.js"></script><script src="contenu/quiz-plus-1.js"></script><script src="contenu/quiz-plus-2.js"></script>
+<script src="contenu/cm2-francais.js"></script><script src="contenu/3e-maths.js"></script><script src="contenu/3e-francais.js"></script><script src="contenu/cm2-eveil.js"></script><script src="contenu/3e-sciences.js"></script><script src="contenu/3e-societe.js"></script><script src="contenu/tle-sciences.js"></script><script src="contenu/tle-lettres.js"></script><script src="contenu/elem-base.js"></script><script src="contenu/moyen-base.js"></script><script src="contenu/lycee-base.js"></script><script src="contenu/elem-eveil.js"></script><script src="contenu/moyen-autres.js"></script><script src="contenu/lycee-autres.js"></script><script src="contenu/lycee-serie-L.js"></script><script src="contenu/quiz-plus-1.js"></script><script src="contenu/quiz-plus-2.js"></script><script src="contenu/arabe.js"></script>
 <script>
 /* ============================================================
    Sunu Jàng 2.0 — app connectée (Supabase) + mode démo
@@ -535,10 +536,11 @@ const AR_SUBJ={
  'Tawhîd':['Unicité et foi','التوحيد','ت','#2E4A62'],
  'Akhlâq':['Bonne conduite','الأخلاق','خ','#5B6B2F']};
 const isAr=s=>!!AR_SUBJ[s];
+const isArL=s=>isAr(s)||s==='Arabe';
 const chKey=(cy,s)=>isAr(s)?'ar|'+s:(lvlKey(cy,s)||cy+'|'+s);
 function subjectsFor(cy,fil){const base=SUBJECTS[cy];if(fil!=='fa')return base;return [...base.filter(s=>s!=='Arabe'&&s!=='Informatique'),...Object.keys(AR_SUBJ)]}
-const chTitle=c=>c.includes(' · ')?`${esc(c.split(' · ')[1])}<div class="arsub" lang="ar">${esc(c.split(' · ')[0])}</div>`:esc(c);
-const subjLabel=s=>isAr(s)?`${esc(s)} <span class="arsub" lang="ar">${AR_SUBJ[s][1]}</span>`:esc(s);
+const chTitle=c=>(!c.includes(' · ')&&/[\u0600-\u06FF]/.test(c))?`<span class="ar" lang="ar">${esc(c)}</span>`:c.includes(' · ')?`${esc(c.split(' · ')[1])}<div class="arsub" lang="ar">${esc(c.split(' · ')[0])}</div>`:esc(c);
+const subjLabel=s=>isAr(s)?`<span class="ar" lang="ar" style="font-weight:700">${AR_SUBJ[s][1]}</span> <span class="muted" style="font-size:.8em">${esc(s)}</span>`:s==='Arabe'?`Arabe <span class="arsub" lang="ar">العربية</span>`:esc(s);
 Object.assign(CHAPTERS,{
  'ar|Nahw':['الكلمة وأقسامها · Le mot et ses catégories','الجملة الاسمية: المبتدأ والخبر · La phrase nominale','الجملة الفعلية: الفعل والفاعل · La phrase verbale','المفعول به · Le complément d\'objet','حروف الجر · Les prépositions','كان وأخواتها · Kâna et ses sœurs','إنّ وأخواتها · Inna et ses sœurs'],
  'ar|Sarf':['الفعل الماضي · L\'accompli (passé)','الفعل المضارع · L\'inaccompli (présent)','فعل الأمر · L\'impératif','الميزان الصرفي · Le schème فَعَلَ','المفرد والمثنى والجمع · Singulier, duel, pluriel'],
@@ -640,6 +642,7 @@ Object.assign(BANK,{
  ['ضِدُّ الصِّدْقِ:',['الأمانة','الكذب','الصبر','الكرم'],1,'Le contraire de la sincérité est le mensonge.'],
  ['قَبْلَ الْأَكْلِ نَقُولُ:',['الحمد لله','بسم الله','السلام عليكم','إن شاء الله'],1,'On commence par « Bismillâh ».']]
 });
+(window.SJ_CONTENT||[]).forEach(c=>{if(c.override){Object.assign(CHAPTERS,c.chapters||{});Object.assign(LESSONS,c.lessons||{});Object.assign(BANK,c.bank||{})}});
 
 // ---------- données de démonstration ----------
 function seedData(){
@@ -1013,9 +1016,9 @@ VIEWS.subject=v=>{
 VIEWS.lesson=v=>{
  const k=chKey(v.cy,v.s)+'|'+v.i;const L=LESSONS[k];const title=(CHAPTERS[chKey(v.cy,v.s)]||[])[v.i];if(!title)return backbar(v.s,'')+`<div class="card"><p>Ce chapitre n'existe pas pour ta classe ou ta série.</p></div>`;
  const body=L?L.html:`<p>Le contenu complet de ce chapitre est en cours de rédaction par l'équipe pédagogique.</p><div class="box">En attendant, entraîne-toi avec le quiz de ${esc(v.s)} : il couvre les notions principales de ton niveau.</div>`;
- return backbar(title.includes(' · ')?title.split(' · ')[1]:title,title.includes(' · ')?title.split(' · ')[0]:v.s)+`<div class="row" style="margin:4px 0 6px"><button class="speak" onclick="speak(document.querySelector('.lesson').innerText)">${I('volume')}${t('listen')}</button><span class="muted">${L?L.dur+' min':''}</span></div>
- <article class="card lesson">${body}</article><div class="spacer"></div>
- <div class="btns"><button class="btn" onclick="S.student.done['${k}']=1;S.student.points+=10;actDone();save();toast('Leçon terminée : +10 points');back()">${I('check',20)}J'ai compris</button><button class="btn ghost" onclick="startQuiz('${v.cy}','${esc(v.s)}',5)">Faire le quiz</button></div>`;
+ return backbar(title.includes(' · ')?title.split(' · ')[1]:title,title.includes(' · ')?title.split(' · ')[0]:(isAr(v.s)?AR_SUBJ[v.s][1]:v.s==='Arabe'?'اللغة العربية':v.s))+`<div class="row" style="margin:4px 0 6px"><button class="speak" onclick="speak(document.querySelector('.lesson').innerText)">${I('volume')}${isArL(v.s)?'<span lang="ar">استمع</span>':t('listen')}</button><span class="muted">${L?(isArL(v.s)?L.dur+' دقائق':L.dur+' min'):''}</span></div>
+ <article class="card lesson${isArL(v.s)&&L?' ar arl':''}"${isArL(v.s)&&L?' lang="ar" dir="rtl"':''}>${body}</article><div class="spacer"></div>
+ <div class="btns"><button class="btn" onclick="S.student.done['${k}']=1;S.student.points+=10;actDone();save();toast('${isArL(v.s)?'أحسنت! +10 نقاط':'Leçon terminée : +10 points'}');back()">${I('check',20)}${isArL(v.s)?'<span lang="ar">فهمتُ الدرس</span>':"J'ai compris"}</button><button class="btn ghost" onclick="startQuiz('${v.cy}','${esc(v.s)}',5)">${isArL(v.s)?'<span lang="ar">اختبر نفسك</span>':'Faire le quiz'}</button></div>`;
 };
 function stQuizHome(){
  const cy=stCycle();
@@ -1043,9 +1046,9 @@ VIEWS.quiz=v=>{
  const q=v.qs[v.i];const p=v.picked;
  return `<header class="top"><button class="iconbtn" aria-label="Quitter le quiz" onclick="back()">${I('x')}</button><div class="qprog grow" role="progressbar" aria-valuenow="${v.i+1}" aria-valuemax="${v.qs.length}"><i style="width:${(v.i+(p!=null?1:0))/v.qs.length*100}%"></i></div><span class="badge">${v.i+1}/${v.qs.length}</span></header>
  <main style="padding-bottom:30px"><div class="row">${mono(q.s,32)}<span class="muted">${esc(q.s)}</span><button class="speak" style="margin-left:auto" onclick="speak(${esc(JSON.stringify(q.q+'. '+q.c.join('. ')))})" aria-label="Écouter la question">${I('volume')}</button></div>
- <h2 class="q" dir="auto">${esc(q.q)}</h2>
+ <h2 class="q${isArL(q.s)?' ar':''}" dir="auto"${isArL(q.s)?' lang="ar"':''}>${esc(q.q)}</h2>
  ${q.c.map((c,i)=>`<button class="opt ${p!=null?(i===q.a?'good':i===p?'wrong':''):''}" ${p!=null?'disabled':''} onclick="answer(${i})"><span class="k">${'ABCD'[i]}</span><span dir="auto" style="flex:1" ${/[\u0600-\u06FF]/.test(c)?'class="ar" lang="ar"':''}>${esc(c)}</span></button>`).join('')}
- ${p!=null?`<div class="explain ${p===q.a?'good':'wrong'}"><b>${p===q.a?'Bonne réponse !':'Pas tout à fait.'}</b> ${esc(q.e)}</div><div class="spacer"></div><button class="btn block" onclick="nextQ()">${v.i+1<v.qs.length?'Question suivante':'Voir mon résultat'}</button>`:''}
+ ${p!=null?`<div class="explain ${p===q.a?'good':'wrong'}" dir="auto"${isArL(q.s)?' lang="ar"':''}><b>${isArL(q.s)?(p===q.a?'أحسنت!':'ليس تمامًا.'):(p===q.a?'Bonne réponse !':'Pas tout à fait.')}</b> ${esc(q.e)}</div><div class="spacer"></div><button class="btn block" onclick="nextQ()">${isArL(q.s)?(v.i+1<v.qs.length?'السؤال التالي':'النتيجة'):(v.i+1<v.qs.length?'Question suivante':'Voir mon résultat')}</button>`:''}
  </main>`;
 };
 function answer(i){const v=S.view;v.picked=i;const q=v.qs[v.i];q.ok=i===q.a;if(q.ok)v.score++;render()}
