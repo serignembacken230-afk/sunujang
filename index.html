@@ -242,7 +242,7 @@ textarea.input{padding:12px 14px;min-height:96px;resize:vertical}
 <body>
 <div id="root"></div>
 <script src="contenu/cm2-maths.js"></script>
-<script src="contenu/cm2-francais.js"></script><script src="contenu/3e-maths.js"></script><script src="contenu/3e-francais.js"></script><script src="contenu/cm2-eveil.js"></script><script src="contenu/3e-sciences.js"></script><script src="contenu/3e-societe.js"></script><script src="contenu/tle-sciences.js"></script><script src="contenu/tle-lettres.js"></script><script src="contenu/elem-base.js"></script><script src="contenu/moyen-base.js"></script><script src="contenu/lycee-base.js"></script><script src="contenu/elem-eveil.js"></script><script src="contenu/moyen-autres.js"></script><script src="contenu/lycee-autres.js"></script>
+<script src="contenu/cm2-francais.js"></script><script src="contenu/3e-maths.js"></script><script src="contenu/3e-francais.js"></script><script src="contenu/cm2-eveil.js"></script><script src="contenu/3e-sciences.js"></script><script src="contenu/3e-societe.js"></script><script src="contenu/tle-sciences.js"></script><script src="contenu/tle-lettres.js"></script><script src="contenu/elem-base.js"></script><script src="contenu/moyen-base.js"></script><script src="contenu/lycee-base.js"></script><script src="contenu/elem-eveil.js"></script><script src="contenu/moyen-autres.js"></script><script src="contenu/lycee-autres.js"></script><script src="contenu/lycee-serie-L.js"></script>
 <script>
 /* ============================================================
    Sunu Jàng 2.0 — app connectée (Supabase) + mode démo
@@ -501,7 +501,7 @@ const BANK={
 // contenu par niveau (fichiers contenu/*.js)
 (window.SJ_CONTENT||[]).forEach(c=>{Object.assign(CHAPTERS,c.chapters||{});Object.assign(LESSONS,c.lessons||{});Object.assign(BANK,c.bank||{})});
 // niveau dont on affiche le programme : celui de l'élève s'il a un contenu propre pour ce cycle
-function lvlKey(cy,s){const lv=S&&S.student&&S.student.niveau;if(lv&&levelOf(lv).cycle===cy&&CHAPTERS[lv+'|'+s])return lv+'|'+s;return null}
+function lvlKey(cy,s){const lv=S&&S.student&&S.student.niveau;if(!lv||levelOf(lv).cycle!==cy)return null;if(cy==='lycee'&&S.student.serie==='L'&&CHAPTERS[lv+'-L|'+s])return lv+'-L|'+s;if(CHAPTERS[lv+'|'+s])return lv+'|'+s;return null}
 function bankFor(cycle,subj){
  if(AR_SUBJ[subj])return BANK['ar|'+subj]||BANK['ar|Hadith'];
  const lk=lvlKey(cycle,subj);if(lk&&BANK[lk])return BANK[lk];
@@ -772,7 +772,7 @@ function buildUser(){
  if(S.role==='director'){u.sub='Direction · '+(d.school.nom||'');if(!u.prenom)u.prenom=d.school.directeur||'Direction'}
  if(S.role==='student'){const k=ki.find(k=>k.role==='student');const c=k&&d.classes.find(x=>x.id===k.classe);
   if(c){S.student.classe=c.id;u.sub='Élève · '+c.nom+(d.school.nom?' · '+d.school.nom:'')}
-  else{S.student.classe=null;u.sub='Élève · '+S.student.niveau+(S.student.fil==='fa'?' · franco-arabe':'')}}
+  else{S.student.classe=null;u.sub='Élève · '+S.student.niveau+(levelOf(S.student.niveau).cycle==='lycee'?' · série '+(S.student.serie==='L'?'L':'S'):'')+(S.student.fil==='fa'?' · franco-arabe':'')}}
  S.user=u}
 // ajoute un code puis recharge ; renvoie les infos du code ou null
 async function addKey(code){code=String(code||'').trim().toUpperCase();if(!code)return null;
@@ -977,7 +977,7 @@ function stHome(){
  const st=S.student,cy=stCycle(),lvl=levelOf(st.niveau);
  const dv=S.data.devoirs.filter(d=>d.classe===st.classe).sort((a,b)=>a.limite.localeCompare(b.limite));
  const pct=Math.min(100,Math.round(st.today/st.goal*100));
- const subs=subjectsFor(cy,st.fil);const cont=(st.fil==='fa'?'ar|Hadith|0':(Object.keys(LESSONS).find(k=>k.startsWith(st.niveau+'|')&&!st.done[k])||Object.keys(LESSONS).find(k=>k.startsWith(cy+'|'))))||'';const [,cs,ci]=cont.split('|');
+ const subs=subjectsFor(cy,st.fil);const cont=(st.fil==='fa'?'ar|Hadith|0':(Object.keys(LESSONS).find(k=>{const q=k.split('|');return (q[0]===st.niveau||q[0]===st.niveau+'-L')&&q[0]+'|'+q[1]===chKey(cy,q[1])&&!st.done[k]})||Object.keys(LESSONS).find(k=>k.startsWith(cy+'|'))))||'';const [,cs,ci]=cont.split('|');
  const mates=st.classe?S.data.eleves.filter(e=>e.classe===st.classe).sort((a,b)=>b.points-a.points).slice(0,3):[];
  return `<section class="hero">${WAX()}<div class="row" style="align-items:flex-start"><div class="grow"><h2>Objectif du jour : ${st.goal} activités</h2><p>${st.today>=st.goal?'Bravo, objectif atteint ! Continue sur ta lancée.':'Encore '+(st.goal-st.today)+' pour garder ta série.'}</p></div><div class="ring" style="--p:${pct}"><span>${st.today}/${st.goal}</span></div></div>
  <div class="stats"><div class="stat"><b>${st.streak} j</b><span>Série</span></div><div class="stat"><b>${st.points}</b><span>Points</span></div><div class="stat"><b>${Object.keys(st.done).length}</b><span>Leçons lues</span></div></div>
@@ -1001,7 +1001,7 @@ function stCourses(){
  const cy=stCycle();const sel=S.student.niveau;
  return `<div class="sec-title" style="margin-top:6px">Cours <small>Programme officiel sénégalais</small></div>
  <div class="chips">${LEVELS.map(l=>`<button class="chip ${sel===l.id?'on':''}" onclick="S.student.niveau='${l.id}';save();render()">${l.id}</button>`).join('')}</div>
- <div class="spacer"></div><div class="tabs2" role="group" aria-label="Filière"><button class="${S.student.fil!=='fa'?'on':''}" onclick="S.student.fil='classique';save();render()">Classique</button><button class="${S.student.fil==='fa'?'on':''}" onclick="S.student.fil='fa';save();render()">Franco-arabe <span lang="ar" class="ar">عربي</span></button></div><div class="list">${subjectsFor(cy,S.student.fil).map(s=>{const n=(CHAPTERS[chKey(cy,s)]||[]).length;return `<button class="item" onclick="openV('subject',{s:'${esc(s)}'})">${mono(s)}<div class="grow"><div class="t">${subjLabel(s)}</div><div class="muted">${isAr(s)?esc(AR_SUBJ[s][0])+' · ':''}${n} chapitres · quiz inclus</div></div>${I('chev',18)}</button>`}).join('')}</div>`;
+ <div class="spacer"></div>${cy==='lycee'?`<div class="tabs2" role="group" aria-label="Série"><button class="${S.student.serie!=='L'?'on':''}" onclick="S.student.serie='S';buildUser();save();render()">Série S (scientifique)</button><button class="${S.student.serie==='L'?'on':''}" onclick="S.student.serie='L';buildUser();save();render()">Série L (littéraire)</button></div>`:''}<div class="tabs2" role="group" aria-label="Filière"><button class="${S.student.fil!=='fa'?'on':''}" onclick="S.student.fil='classique';save();render()">Classique</button><button class="${S.student.fil==='fa'?'on':''}" onclick="S.student.fil='fa';save();render()">Franco-arabe <span lang="ar" class="ar">عربي</span></button></div><div class="list">${subjectsFor(cy,S.student.fil).map(s=>{const n=(CHAPTERS[chKey(cy,s)]||[]).length;return `<button class="item" onclick="openV('subject',{s:'${esc(s)}'})">${mono(s)}<div class="grow"><div class="t">${subjLabel(s)}</div><div class="muted">${isAr(s)?esc(AR_SUBJ[s][0])+' · ':''}${n} chapitres · quiz inclus</div></div>${I('chev',18)}</button>`}).join('')}</div>`;
 }
 VIEWS={};
 VIEWS.subject=v=>{
@@ -1010,7 +1010,7 @@ VIEWS.subject=v=>{
  <div class="sec-title">Chapitres</div><div class="list">${ch.map((c,i)=>{const k=chKey(cy,v.s)+'|'+i;const has=!!LESSONS[k];return `<button class="item" onclick="openV('lesson',{cy:'${cy}',s:'${esc(v.s)}',i:${i}})"><div class="av" style="${S.student.done[k]?'background:var(--ok);color:#fff':''}">${S.student.done[k]?I('check',18):i+1}</div><div class="grow"><div class="t">${chTitle(c)}</div><div class="muted">${has?LESSONS[k].dur+' min · leçon + exemples':'Résumé à venir'}</div></div>${I('chev',18)}</button>`}).join('')}</div>`;
 };
 VIEWS.lesson=v=>{
- const k=chKey(v.cy,v.s)+'|'+v.i;const L=LESSONS[k];const title=CHAPTERS[chKey(v.cy,v.s)][v.i];
+ const k=chKey(v.cy,v.s)+'|'+v.i;const L=LESSONS[k];const title=(CHAPTERS[chKey(v.cy,v.s)]||[])[v.i];if(!title)return backbar(v.s,'')+`<div class="card"><p>Ce chapitre n'existe pas pour ta classe ou ta série.</p></div>`;
  const body=L?L.html:`<p>Le contenu complet de ce chapitre est en cours de rédaction par l'équipe pédagogique.</p><div class="box">En attendant, entraîne-toi avec le quiz de ${esc(v.s)} : il couvre les notions principales de ton niveau.</div>`;
  return backbar(title.includes(' · ')?title.split(' · ')[1]:title,title.includes(' · ')?title.split(' · ')[0]:v.s)+`<div class="row" style="margin:4px 0 6px"><button class="speak" onclick="speak(document.querySelector('.lesson').innerText)">${I('volume')}${t('listen')}</button><span class="muted">${L?L.dur+' min':''}</span></div>
  <article class="card lesson">${body}</article><div class="spacer"></div>
