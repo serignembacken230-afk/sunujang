@@ -784,7 +784,11 @@ async function addKey(code){code=String(code||'').trim().toUpperCase();if(!code)
  const had=S.keys.includes(code);if(!had)S.keys.push(code);
  try{await pullNow({force:true})}catch(e){if(!had)S.keys=S.keys.filter(k=>k!==code);toast('Impossible de joindre le serveur. Réessaie.','x');return null}
  return S.kinfo.find(k=>k.cle===code)||null}
-async function refresh(){if(!S.live||!S.keys.length||document.hidden)return;try{const before=JSON.stringify(S._sync);await pullNow();if(JSON.stringify(S._sync)!==before&&!$('#scrim')&&!document.activeElement.matches('input,textarea,select'))render();setNet()}catch(e){setNet()}}
+// Statistiques anonymes : un enregistrement par quiz terminé (classe, matière, score), sans nom ni code.
+function devId(){try{let d=localStorage.getItem('sj_dev');if(!d){d=Math.random().toString(36).slice(2,12);localStorage.setItem('sj_dev',d)}return d}catch(e){return null}}
+function logQuiz(label,score,total){if(S.live===false||!S.student||!S.student.niveau)return;const k=(S.kinfo||[]).find(x=>x.classe)||{};S._qlog=(S._qlog||[]).concat([{p_niveau:S.student.niveau,p_serie:levelOf(S.student.niveau).cycle==='lycee'?(S.student.serie==='L'?'L':'S'):'',p_matiere:String(label||'').slice(0,40),p_score:score,p_total:total,p_espace:S.espace||null,p_classe:k.classe||null,p_appareil:devId()}]).slice(-200);flushQ()}
+let flushing=false;async function flushQ(){if(flushing||!navigator.onLine||!S._qlog||!S._qlog.length)return;flushing=true;try{while(S._qlog.length){await api('sj_log_quiz',S._qlog[0]);S._qlog.shift();save()}}catch(e){}flushing=false}
+async function refresh(){flushQ();if(!S.live||!S.keys.length||document.hidden)return;try{const before=JSON.stringify(S._sync);await pullNow();if(JSON.stringify(S._sync)!==before&&!$('#scrim')&&!document.activeElement.matches('input,textarea,select'))render();setNet()}catch(e){setNet()}}
 function wait(on){const b=document.activeElement;if(b&&b.tagName==='BUTTON'){b.disabled=on;b.style.opacity=on?.6:1}}
 load();dayTick();
 
@@ -1052,7 +1056,7 @@ VIEWS.quiz=v=>{
  </main>`;
 };
 function answer(i){const v=S.view;v.picked=i;const q=v.qs[v.i];q.ok=i===q.a;if(q.ok)v.score++;render()}
-function nextQ(){const v=S.view;v.i++;v.picked=null;if(v.i>=v.qs.length){S.student.points+=v.score*10;actDone();S.data.resultats.push({matiere:v.label,score:v.score,total:v.qs.length,pct:Math.round(v.score/v.qs.length*100),date:new Date().toLocaleDateString('fr-FR')});if(S.user.eleve){const e=S.data.eleves.find(x=>x.id===S.user.eleve);e&&(e.points+=v.score*10)}save()}render();scrollTo(0,0)}
+function nextQ(){const v=S.view;v.i++;v.picked=null;if(v.i>=v.qs.length){logQuiz(v.label,v.score,v.qs.length);S.student.points+=v.score*10;actDone();S.data.resultats.push({matiere:v.label,score:v.score,total:v.qs.length,pct:Math.round(v.score/v.qs.length*100),date:new Date().toLocaleDateString('fr-FR')});if(S.user.eleve){const e=S.data.eleves.find(x=>x.id===S.user.eleve);e&&(e.points+=v.score*10)}save()}render();scrollTo(0,0)}
 function stExams(){
  const lvl=levelOf(S.student.niveau);const prem=S.student.premium;
  const order=lvl.exam?[lvl.exam,...Object.keys(EXAMS).filter(x=>x!==lvl.exam)]:Object.keys(EXAMS);
